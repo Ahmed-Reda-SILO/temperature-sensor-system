@@ -2,24 +2,23 @@
 
 > ⚡ **Interactive first-order design tool for low-power Voltage-to-Time Converter (VTC) interfaces used with analog temperature sensors.**
 
+## 🚀 Launch Explorer
+
+👉 **[Open VTC Design Explorer](./VTC_Design_Explorer_v1_0_stable.html)**
+
+> Keep the README and `VTC_Design_Explorer_v1_0_stable.html` in the **same folder** so the link works locally and on GitHub.
+
+---
+
 ## ✨ What it does
 
 - 🎯 Supports **LMT70/LMT70A**, **TMP236**, and **Custom voltage-output sensors**
 - 🌡️ Converts temperature requirements into electrical VTC requirements
 - 🔀 Supports **single- and multi-channel** acquisition
-- ⚙️ Recommends an initial:
-  - `K_VTC`
-  - `C_INT`
-  - `I_REF`
-  - `f_CLK`
-  - `f_VTC`
+- ⚙️ Recommends initial `K_VTC`, `C_INT`, `I_REF`, `f_CLK`, and `f_VTC`
 - 📊 Explores **CINT**, **IREF**, and **VTC-rate** trade-offs
 - 🗺️ Shows the **CINT–IREF feasibility map**
-- ✅ Classifies designs as:
-  - Feasible
-  - Resolution-limited
-  - Conversion-time-limited
-  - Leakage-sensitive
+- ✅ Identifies feasible, resolution-limited, conversion-time-limited, and leakage-sensitive regions
 - 📤 Exports the recommended specification as **JSON**
 
 ---
@@ -44,8 +43,6 @@
 
 ## 📋 Main Outputs
 
-The explorer reports:
-
 - 🌡️ Sensor and temperature range
 - ⚡ Required sensor-voltage increment and VTC input window
 - ⏱️ Recommended VTC gain
@@ -63,15 +60,7 @@ The explorer reports:
 
 Supports sequential acquisition from multiple temperature sensors using a shared VTC.
 
-The explorer considers:
-
-- Channel count
-- Required per-channel rate
-- Aggregate VTC throughput
-- MUX switching time
-- Analog settling time
-- Reset time
-- Guard / latch timing
+The explorer considers **channel count, per-channel rate, aggregate throughput, MUX switching, settling, reset, and guard timing**.
 
 ---
 
@@ -101,7 +90,7 @@ Before implementation, verify the design using:
 
 ## ▶️ Run
 
-Open the HTML file directly in a modern browser:
+Open `VTC_Design_Explorer_v1_0_stable.html` directly in:
 
 **Chrome · Edge · Firefox**
 
