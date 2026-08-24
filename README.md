@@ -1,502 +1,116 @@
-# VTC Design Explorer
+# 🌡️ VTC Design Explorer
 
-## Overview
+> ⚡ **Interactive first-order design tool for low-power Voltage-to-Time Converter (VTC) interfaces used with analog temperature sensors.**
 
-**VTC Design Explorer** is an interactive engineering tool for deriving and exploring an initial specification for a low-power **Voltage-to-Time Converter (VTC)** used with analog temperature sensors.
+## ✨ What it does
 
-The explorer translates application-level temperature requirements into circuit-level VTC parameters. It supports built-in sensor examples such as **LMT70/LMT70A** and **TMP236**, as well as a **Custom voltage-output sensor** mode.
-
-The tool is intended for first-order design exploration before transistor-level implementation, PVT verification, and Monte Carlo analysis.
-
----
-
-## Main Capabilities
-
-The explorer provides:
-
-- Built-in sensor presets:
-  - LMT70 / LMT70A
-  - TMP236
-  - Custom voltage-output sensor
-- User-defined:
-  - temperature range
-  - required temperature resolution
-  - sensor sensitivity
-  - VTC input-window margin
-  - number of channels
-  - required per-channel conversion rate
-- Configurable VTC design limits:
-  - minimum and maximum integration capacitance
-  - minimum and maximum reference current
-  - minimum and maximum VTC conversion rate
-  - minimum and maximum VTC clock frequency
-- Timing parameters:
-  - reset interval
-  - settling interval
-  - guard interval
-  - MUX switching interval
-- Leakage and error-budget constraints
-- Automatic VTC feasibility analysis
-- Automatic recommendation of an initial VTC operating point
-- Parameter-sweep plots for:
-  - integration capacitance
-  - reference current
-  - VTC conversion rate
-- Two-dimensional `C_INT`–`I_REF` feasibility map
-- Export of the recommended specification in JSON format
+- 🎯 Supports **LMT70/LMT70A**, **TMP236**, and **Custom voltage-output sensors**
+- 🌡️ Converts temperature requirements into electrical VTC requirements
+- 🔀 Supports **single- and multi-channel** acquisition
+- ⚙️ Recommends an initial:
+  - `K_VTC`
+  - `C_INT`
+  - `I_REF`
+  - `f_CLK`
+  - `f_VTC`
+- 📊 Explores **CINT**, **IREF**, and **VTC-rate** trade-offs
+- 🗺️ Shows the **CINT–IREF feasibility map**
+- ✅ Classifies designs as:
+  - Feasible
+  - Resolution-limited
+  - Conversion-time-limited
+  - Leakage-sensitive
+- 📤 Exports the recommended specification as **JSON**
 
 ---
 
-## Design Flow
+## 🚀 Quick Start
 
-The explorer follows the design sequence:
-
-1. **Select or define the temperature sensor**
-2. **Define the required temperature range**
-3. **Set the required temperature resolution**
-4. **Calculate the corresponding sensor-voltage requirement**
-5. **Determine the VTC input window**
-6. **Select single- or multi-channel operation**
-7. **Apply user-defined circuit limits**
-8. **Determine the feasible VTC-gain region**
-9. **Select a suitable `C_INT` and `I_REF`**
-10. **Calculate timing resolution, noise, counter width, leakage, and power**
-11. **Generate the Recommended Initial VTC Specification**
-12. **Explore alternative design points using parameter sweeps**
+1. 🎛️ Select the **sensor**
+2. 🌡️ Set `T_MIN`, `T_MAX`, and `ΔT_REQ`
+3. 🔢 Select the **number of channels**
+4. ⚙️ Define limits for `C_INT`, `I_REF`, `f_VTC`, and `f_CLK`
+5. ▶️ Click **Calculate & Recommend**
+6. ✅ Review the **Recommended Initial VTC Specification**
+7. 📈 Explore alternative design points using the sweep plots and feasibility map
 
 ---
 
-## Core Equations
+## 🧭 Design Flow
 
-### Sensor voltage requirement
-
-For a direct voltage-output temperature sensor,
-
-\[
-\Delta V_{REQ} = |S_T| \Delta T_{REQ}
-\]
-
-where:
-
-- `S_T` is the local temperature sensitivity
-- `ΔT_REQ` is the required temperature resolution
-- `ΔV_REQ` is the minimum voltage increment that the VTC should resolve
-
-The useful sensor-voltage span is approximated by
-
-\[
-\Delta V_{TEMP}
-\approx
-|S_T|(T_{MAX}-T_{MIN})
-\]
-
-The VTC input window is then estimated as
-
-\[
-V_{WIN}
-=
-\Delta V_{TEMP}(1+M)
-\]
-
-where `M` is the selected design margin, unless the user manually specifies `V_WIN`.
+**Sensor → Thermal Requirements → Voltage Requirement → Channel Count → VTC Limits → Feasibility → Recommended VTC Specification**
 
 ---
 
-### Voltage-to-time conversion
+## 📋 Main Outputs
 
-For a constant-current VTC,
+The explorer reports:
 
-\[
-K_{VTC}
-=
-\frac{C_{INT}}{I_{REF}}
-\]
-
-and the conversion time is
-
-\[
-t_{OUT}
-=
-K_{VTC}V_{EFF}
-\]
-
-where:
-
-- `C_INT` is the integration capacitance
-- `I_REF` is the reference charging current
-- `K_VTC` is the voltage-to-time gain
-- `V_EFF` is the effective voltage applied to the VTC
+- 🌡️ Sensor and temperature range
+- ⚡ Required sensor-voltage increment and VTC input window
+- ⏱️ Recommended VTC gain
+- 🔋 Recommended integration capacitance and reference current
+- 🕒 Recommended VTC clock and conversion rate
+- 🎯 Voltage and temperature resolution
+- 🔢 Timing counts and counter width
+- 🌫️ Capacitor thermal-noise estimate
+- 💧 Leakage ratio
+- ⚡ First-order ramp-current power contribution
 
 ---
 
-### Timing quantization
+## 🔀 Multi-Channel Mode
 
-The input-equivalent voltage represented by one timing count is
+Supports sequential acquisition from multiple temperature sensors using a shared VTC.
 
-\[
-V_{LSB}
-=
-\frac{1}{f_{CLK}K_{VTC}}
-\]
+The explorer considers:
 
-and the corresponding temperature increment is
-
-\[
-T_{LSB}
-=
-\frac{1}{f_{CLK}K_{VTC}|S_T|}
-\]
-
-The number of timing counts generated by the required temperature step is
-
-\[
-N_{REQ}
-=
-f_{CLK}K_{VTC}\Delta V_{REQ}
-\]
-
----
-
-### Feasible VTC gain
-
-The minimum required gain is
-
-\[
-K_{VTC,min}
-=
-\frac{N_{REQ}}
-{f_{CLK}\Delta V_{REQ}}
-\]
-
-and the maximum gain allowed by the conversion-time constraint is
-
-\[
-K_{VTC,max}
-=
-\frac{t_{CONV,max}}
-{V_{WIN}}
-\]
-
-A feasible design must satisfy
-
-\[
-K_{VTC,min}
-\le
-K_{VTC}
-\le
-K_{VTC,max}
-\]
-
----
-
-## Single- and Multi-Channel Operation
-
-For a single channel, the full VTC conversion rate is available to the sensor.
-
-For `N_CH` sequentially multiplexed channels, the required aggregate conversion rate is approximately
-
-\[
-f_{VTC}
-\ge
-N_{CH} f_{CH}
-\]
-
-where:
-
-- `N_CH` is the number of channels
-- `f_CH` is the required conversion rate per channel
-- `f_VTC` is the aggregate conversion rate of the shared VTC
-
-The explorer also accounts for:
-
+- Channel count
+- Required per-channel rate
+- Aggregate VTC throughput
 - MUX switching time
-- analog settling time
-- capacitor reset time
-- comparator / latch guard time
+- Analog settling time
+- Reset time
+- Guard / latch timing
 
 ---
 
-## Built-In Sensor Examples
+## ⚠️ Important
 
-### LMT70 / LMT70A
+For sensors such as **LMT70**, the absolute output may be around `0.9 V`, while the useful temperature-dependent variation is only a few tens of millivolts.
 
-Representative preset:
-
-- Output type: analog voltage
-- Sensitivity: approximately `-5.19 mV/°C`
-- Representative output near `37°C`: approximately `0.91 V`
-- Body-range accuracy benchmark: approximately `±0.13°C`
-
-Because its voltage sensitivity is relatively small, the LMT70/LMT70A provides a useful demanding case for VTC input-resolution analysis.
-
-### TMP236
-
-Representative preset:
-
-- Output type: analog voltage
-- Sensitivity: approximately `+19.5 mV/°C`
-- Representative output near `37°C`: approximately `1.122 V`
-- Accuracy benchmark: approximately `±0.5°C`
-
-Its larger voltage sensitivity generally relaxes the required VTC input resolution, but it also produces a larger voltage span over the same temperature range.
+A narrow VTC input window therefore assumes **input-window translation or differential processing** before the VTC.
 
 ---
 
-## User-Defined Sensor Mode
+## 🧪 Design Scope
 
-Select **Custom voltage-output sensor** and enter:
+This tool provides **first-order engineering estimates**.
 
-- temperature sensitivity
-- representative sensor voltage at `37°C`
-- sensor accuracy or tolerance
-- temperature range
-- required temperature resolution
+Before implementation, verify the design using:
 
-The present implementation assumes an approximately linear sensor response over the selected temperature interval.
+- 🔬 Transistor-level simulation
+- 📐 PVT analysis
+- 🎲 Monte Carlo simulation
+- 🧩 Parasitic / extracted simulation
+- 🧪 Experimental validation
 
-For strongly nonlinear sensors, the local slope or an application-specific linearized sensitivity should be used.
-
----
-
-## Recommended Initial VTC Specification
-
-When a feasible design point is found, the explorer reports parameters including:
-
-- sensor
-- temperature range
-- required temperature resolution
-- sensor-voltage increment
-- useful sensor-voltage excursion
-- VTC input window
-- number of channels
-- required per-channel rate
-- recommended aggregate VTC conversion rate
-- recommended clock frequency
-- minimum and maximum feasible VTC gain
-- selected VTC gain
-- recommended integration capacitance
-- recommended reference current
-- input-referred voltage LSB
-- temperature LSB
-- timing counts per required temperature increment
-- maximum conversion interval
-- full-window conversion time
-- counter width
-- `kT/C` noise estimate
-- reset-switch requirement
-- leakage fraction
-- input-referred error target
-- first-order charging-current power contribution
+> ⚠️ The calculated VTC resolution is **not equivalent to clinical temperature accuracy**.
 
 ---
 
-## Parameter Exploration
+## ▶️ Run
 
-### CINT Exploration
+Open the HTML file directly in a modern browser:
 
-The capacitor sweep shows how changing `C_INT` affects:
+**Chrome · Edge · Firefox**
 
-- required `I_REF`
-- `kT/C` noise
-- reset-switch resistance requirement
-- leakage sensitivity
-- charging-current power
-
-At constant VTC gain,
-
-\[
-I_{REF}
-=
-\frac{C_{INT}}{K_{VTC}}
-\]
-
-Increasing `C_INT` improves `kT/C` noise but increases charging current and reset requirements.
+No installation is required.
 
 ---
 
-### IREF Exploration
+## 📌 Version
 
-The reference-current sweep shows how changing `I_REF` affects:
+**VTC Design Explorer — v1.0**
 
-- `K_VTC`
-- temperature LSB
-- full-window conversion time
-- number of timing counts
-- ramp-current power
-- leakage sensitivity
-
-At constant capacitance,
-
-\[
-K_{VTC}
-=
-\frac{C_{INT}}{I_{REF}}
-\]
-
-A very low current can improve gain and reduce charging power, but may become impractical when leakage current is no longer negligible.
-
----
-
-### VTC Conversion-Rate Exploration
-
-The conversion-rate sweep shows the trade-off between:
-
-- available conversion time
-- maximum permitted VTC gain
-- per-channel throughput
-- timing-resolution margin
-
-Higher conversion rates reduce the available conversion interval and therefore reduce the maximum achievable `K_VTC`.
-
----
-
-## CINT–IREF Feasibility Map
-
-The feasibility map visualizes the design space in the `C_INT`–`I_REF` plane.
-
-Each point corresponds to
-
-\[
-K_{VTC}
-=
-\frac{C_{INT}}{I_{REF}}
-\]
-
-The map classifies candidate points as:
-
-- **Feasible**
-- **Resolution-limited**
-- **Conversion-time-limited**
-- **Leakage-sensitive**
-
-The automatically recommended operating point is indicated on the map.
-
----
-
-## Optimization Priorities
-
-The explorer provides several optimization modes:
-
-- **Balanced**
-- **Lowest power**
-- **Highest resolution**
-- **Highest throughput**
-
-These modes change how the candidate operating points are ranked within the feasible region.
-
-The result should be treated as a recommended **starting point**, not a globally optimized transistor-level solution.
-
----
-
-## Important Interpretation of VWIN
-
-For sensors such as LMT70, the absolute sensor output can be around `0.9 V`, while the useful physiological temperature-dependent excursion may only be a few tens of millivolts.
-
-Therefore, when the explorer recommends a narrow `V_WIN`, the VTC architecture is assumed to use **input-window translation, differential processing, or an equivalent level-shifting technique** so that the VTC processes the useful sensor-voltage variation rather than the entire DC sensor output.
-
----
-
-## Power Estimate
-
-The reported ramp-current power is a first-order estimate of the current-source contribution only.
-
-It does **not** include:
-
-- comparator power
-- current-reference generation
-- clock generation
-- reset-switching power
-- digital counter power
-- multiplexer power
-- sensor power
-
-Therefore, it must not be interpreted as the total VTC or system power.
-
----
-
-## Limitations
-
-The explorer is a first-order engineering design aid.
-
-The calculated VTC resolution does not represent complete wearable or clinical temperature accuracy.
-
-A practical implementation should additionally consider:
-
-- sensor tolerance
-- sensor nonlinearity
-- sensor-to-skin thermal coupling
-- anatomical placement
-- ambient temperature
-- calibration
-- sensor self-heating
-- reference-current drift
-- comparator noise and offset
-- timing jitter
-- switch leakage
-- charge injection
-- parasitic capacitance
-- MUX settling
-- process variation
-- supply variation
-- temperature variation
-- device mismatch
-
-The recommended design should therefore be verified using:
-
-- transistor-level simulation
-- PVT analysis
-- Monte Carlo analysis
-- extracted-layout simulation
-- experimental characterization
-
----
-
-## Running the Explorer
-
-The explorer is a self-contained HTML file and does not require installation.
-
-1. Download the `.html` file.
-2. Open it in a modern browser such as Chrome, Edge, or Firefox.
-3. Select a sensor preset or define a custom sensor.
-4. Enter the required temperature and circuit constraints.
-5. Click **Calculate & Recommend**.
-6. Review the feasibility result and Recommended Initial VTC Specification.
-7. Use the parameter-sweep plots and feasibility map to explore alternatives.
-
----
-
-## Intended Use
-
-The explorer is intended for:
-
-- wearable temperature-sensor interface design
-- VTC architecture exploration
-- single-channel temperature acquisition
-- multi-channel / multi-point temperature acquisition
-- early-stage analog/mixed-signal circuit specification
-- research and educational use
-- supporting the sensor-to-VTC design methodology used in wearable temperature-monitoring research
-
----
-
-## Version
-
-**VTC Design Explorer — initial stable version**
-
-Future versions may include:
-
-- interactive graph cursors
-- IEEE-style plot export
-- sensor-voltage-to-time transfer simulation
-- temperature-to-time transfer simulation
-- VTC gain extraction
-- single- and multi-channel operational simulation
-- dedicated abbreviations and symbols page
-- About / Contact page
-- advanced 3-D feasible-design visualization
-
----
-
-## Disclaimer
-
-This tool provides analytical and first-order circuit-design estimates. It is not a medical device, diagnostic tool, or substitute for detailed circuit verification or clinical validation.
+Built for rapid sensor-to-VTC specification and design-space exploration.
