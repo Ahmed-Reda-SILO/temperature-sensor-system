@@ -1,13 +1,13 @@
-# 🌡️ VTC Design Explorer
-
-> ⚡ **Interactive first-order design tool for low-power Voltage-to-Time Converter (VTC) interfaces used with analog temperature sensors.**
-
 ## 🚀 Launch Explorer
 
-👉 **[Open VTC Design Explorer](https://ahmed-reda-silo.github.io/temperature-sensor-system/)**
+### ✅ Stable Version
+👉 **[Open VTC Design Explorer v1.0](https://ahmed-reda-silo.github.io/temperature-sensor-system/)**
 
----
+### 🧪 Advanced Version
+👉 **[Open VTC Design Explorer v3.0](https://ahmed-reda-silo.github.io/temperature-sensor-system/VTC_Design_Explorer_v3_0.html)**
 
+> v1.0 is the stable baseline.  
+> v3.0 adds advanced design visualization, VTC simulation, design reports, publication mode, abbreviations, and contact information.
 ## ✨ What it does
 
 - 🎯 Supports **LMT70/LMT70A**, **TMP236**, and **Custom voltage-output sensors**
