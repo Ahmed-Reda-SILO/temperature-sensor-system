@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VTC Design Explorer v3.0</title>
+<style>
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --ink:#17202a; --muted:#667085;
+  --line:#d9dee7; --accent:#2563eb; --good:#0f8a5f; --warn:#b7791f;
+  --bad:#c43d3d; --violet:#7c3aed; --soft:#eef4ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif}
+header{padding:20px 24px;background:#111827;color:#fff}
+header h1{margin:0 0 5px;font-size:24px}
+header p{margin:0;color:#cfd6e4;font-size:13px;max-width:1100px}
+nav{position:sticky;top:0;z-index:20;display:flex;gap:4px;overflow-x:auto;padding:8px max(18px,calc((100vw - 1500px)/2 + 18px));background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(17,24,39,.05)}
+.navbtn{white-space:nowrap;background:transparent;color:#344054;border:1px solid transparent;padding:8px 12px;font-size:12px}
+.navbtn:hover{background:#f5f7fa}.navbtn.active{color:#fff;background:#1f2937;border-color:#1f2937}
+main{max-width:1500px;margin:0 auto;padding:18px}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-7{grid-column:span 7}.span-6{grid-column:span 6}.span-5{grid-column:span 5}.span-4{grid-column:span 4}
+@media(max-width:1000px){.span-8,.span-7,.span-6,.span-5,.span-4{grid-column:span 12}}
+h2{font-size:17px;margin:0 0 12px} h3{font-size:14px;margin:14px 0 8px}
+.small{font-size:12px;color:var(--muted);line-height:1.45}
+.formgrid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px}
+@media(max-width:900px){.formgrid{grid-template-columns:repeat(2,minmax(130px,1fr))}}
+@media(max-width:560px){.formgrid{grid-template-columns:1fr}}
+label{font-size:11px;color:#475467;font-weight:650;display:block;margin-bottom:4px}
+input,select,button{font:inherit}
+input,select{width:100%;border:1px solid #cfd6df;border-radius:8px;padding:8px 9px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid #c7d7fe;border-color:#7aa2ff}
+button{border:0;border-radius:8px;padding:9px 12px;cursor:pointer;background:var(--accent);color:#fff;font-weight:700}
+button.secondary{background:#eef2f7;color:#1f2937;border:1px solid #cfd6df}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.status{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:9px;font-weight:800}
+.status.good{background:#eaf8f2;color:#086b49}.status.bad{background:#fdecec;color:#a12c2c}.status.warn{background:#fff8e8;color:#8a5a12}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:currentColor}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfcfe}
+.kpi .v{font-size:18px;font-weight:800;margin-top:3px}.kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:8px;border-bottom:1px solid #e7eaf0;text-align:left;vertical-align:top}
+th{font-size:11px;color:#475467;background:#f8fafc;position:sticky;top:0}
+.scroll{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:9px}
+.badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800}
+.badge.good{background:#e9f8f1;color:#086b49}.badge.warn{background:#fff4db;color:#8a5a12}.badge.bad{background:#fdeaea;color:#a12c2c}
+.callout{padding:10px 12px;background:var(--soft);border-left:4px solid var(--accent);border-radius:7px;font-size:12px;line-height:1.45}
+.chartbox{height:330px;border:1px solid #b8bec8;border-radius:3px;background:#fff;padding:4px;position:relative}
+svg{width:100%;height:100%;display:block}
+canvas{width:100%;height:360px;border:1px solid #b8bec8;border-radius:3px;background:#fff;cursor:crosshair}
+.chartbox svg{cursor:crosshair;font-family:"Times New Roman",Times,serif}
+.chart-tip{position:fixed;z-index:100;pointer-events:none;display:none;min-width:142px;padding:7px 9px;background:rgba(255,255,255,.97);border:1px solid #111827;border-radius:2px;box-shadow:0 2px 7px rgba(0,0,0,.14);font:12px/1.35 "Times New Roman",Times,serif;color:#111827}
+.chart-tip strong{display:block;margin-bottom:2px}
+.sim-kpis{grid-template-columns:repeat(3,1fr)}
+.sim-controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-bottom:12px}.sim-controls>div{min-width:180px;max-width:280px}
+.abbr-grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:14px}@media(max-width:800px){.abbr-grid{grid-template-columns:1fr}}
+.abbr-table td:first-child{width:24%;font-family:"Times New Roman",Times,serif;font-weight:700;color:#111827;white-space:nowrap}
+.profile{display:grid;grid-template-columns:110px 1fr;gap:18px;align-items:start}.avatar{width:96px;height:96px;border-radius:50%;background:#111827;color:#fff;display:grid;place-items:center;font-size:32px;font-weight:800;letter-spacing:.04em}.contact-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.contact-links a{display:inline-block;text-decoration:none;border:1px solid #b8bec8;border-radius:7px;padding:8px 10px;color:#1d4ed8;background:#fff;font-size:12px;font-weight:700}
+@media(max-width:560px){.profile{grid-template-columns:1fr}.sim-kpis{grid-template-columns:1fr}}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#475467;margin-top:8px}
+.legend span i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.sectionnote{font-size:11px;color:var(--muted);margin-top:-5px;margin-bottom:10px}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+code.formula{background:#f6f8fa;border:1px solid #e4e7ec;border-radius:6px;padding:2px 5px;font-size:11px}
+.footer{font-size:11px;color:var(--muted);padding:12px 2px 25px}
+
+/* v3.0 visual system */
+:root{--input:#2563eb;--result:#0f8a5f;--warning:#b7791f;--failure:#c43d3d;--theory:#667085;--navy:#0b1830;--cyan:#0ea5b7}
+body{background:linear-gradient(180deg,#eef3f8 0,#f7f8fa 260px,#f4f6f8 100%)}
+header{position:relative;overflow:hidden;background:linear-gradient(115deg,#081426,#102c52 58%,#0b6571);padding:25px max(24px,calc((100vw - 1500px)/2 + 24px))}
+header:after{content:"";position:absolute;width:360px;height:360px;border:70px solid rgba(255,255,255,.045);border-radius:50%;right:-95px;top:-180px}
+header h1{font-size:27px;letter-spacing:-.02em}.version-chip{display:inline-block;margin-left:7px;padding:3px 8px;border:1px solid rgba(255,255,255,.32);border-radius:999px;background:rgba(255,255,255,.1);font-size:11px;font-weight:700;vertical-align:4px}
+.header-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.header-meta span{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#d9e8f5;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:4px 8px}
+.card{transition:box-shadow .2s,border-color .2s}.card:hover{box-shadow:0 6px 22px rgba(15,23,42,.06)}
+.input-card{border-top:4px solid var(--input)}.result-card{border-top:4px solid var(--result)}.theory-card{border-top:4px solid var(--theory)}.simulation-card{border-top:4px solid var(--cyan)}
+.workflow{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 2px 9px rgba(17,24,39,.04)}
+.stepbtn{position:relative;border:0;border-right:1px solid #e4e7ec;border-radius:0;background:#fff;color:#475467;padding:13px 9px;font-size:11px}.stepbtn:last-child{border-right:0}.stepbtn b{display:inline-grid;place-items:center;width:22px;height:22px;margin-right:6px;border-radius:50%;background:#eef2f7;color:#344054}.stepbtn.active{background:#eef5ff;color:#1d4ed8}.stepbtn.active b{background:#2563eb;color:#fff}.stepbtn.done b{background:#0f8a5f;color:#fff}
+@media(max-width:720px){.workflow{grid-template-columns:1fr}.stepbtn{border-right:0;border-bottom:1px solid #e4e7ec;text-align:left}}
+.dashboard{display:grid;grid-template-columns:1.35fr repeat(5,1fr);gap:9px}.dash-status,.dash-kpi{min-height:86px;border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff}.dash-status{display:flex;flex-direction:column;justify-content:center}.dash-status.good{background:#edf9f4;border-color:#9fd8c2;color:#086b49}.dash-status.bad{background:#fff0f0;border-color:#efb3b3;color:#a12c2c}.dash-status.warn{background:#fff9e9;border-color:#efd69b;color:#8a5a12}.dash-kpi .l{font-size:9px;color:#667085;text-transform:uppercase;letter-spacing:.06em}.dash-kpi .v{font-size:17px;font-weight:800;margin-top:7px;color:#101828}.dash-kpi.result{border-bottom:3px solid var(--result)}
+@media(max-width:1100px){.dashboard{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.dashboard{grid-template-columns:1fr 1fr}.dash-status{grid-column:span 2}}
+.architecture{display:grid;grid-template-columns:1fr 46px 1fr 46px 1.15fr 46px 1fr 46px 1fr;align-items:stretch;gap:4px}.arch-node{min-height:105px;display:flex;flex-direction:column;justify-content:center;text-align:center;border:1px solid #cdd5df;border-radius:10px;background:#fff;padding:10px}.arch-node.input{background:#eef5ff;border-color:#a8c6fa}.arch-node.result{background:#edf9f4;border-color:#9fd8c2}.arch-node.theory{background:#f5f6f7}.arch-node .icon{font-size:24px;line-height:1}.arch-node b{font-size:12px;margin-top:6px}.arch-node small{font-size:10px;color:#667085;margin-top:4px;line-height:1.35}.arch-arrow{display:grid;place-items:center;color:#5681a8;font-size:24px;font-weight:300}.arch-arrow small{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.05em}
+@media(max-width:900px){.architecture{grid-template-columns:1fr}.arch-arrow{transform:rotate(90deg);height:30px}.arch-node{min-height:84px}}
+.info-btn{display:inline-grid;place-items:center;width:16px;height:16px;margin-left:4px;border:1px solid #9aa4b2;border-radius:50%;padding:0;background:#fff;color:#475467;font:bold 10px Georgia;vertical-align:1px;cursor:help}.info-btn:hover,.info-btn:focus{background:#2563eb;color:#fff;border-color:#2563eb;outline:none}.info-pop{position:fixed;z-index:110;display:none;max-width:280px;padding:9px 11px;background:#101828;color:#fff;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.24);font-size:11px;line-height:1.45;pointer-events:none}
+.chart-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:7px 0}.chart-toolbar button{padding:5px 7px;border-radius:5px;background:#fff;color:#344054;border:1px solid #cdd5df;font-size:10px;font-weight:700}.chart-toolbar button:hover{background:#eef5ff;border-color:#8bb2f1;color:#1d4ed8}.chart-toolbar .active{background:#e8f2ff;color:#1d4ed8}.chart-toolbar .spacer{flex:1}.chart-toolbar .tool-label{font:10px/1.2 "Times New Roman",serif;color:#667085}
+.series-legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 2px;font:11px "Times New Roman",serif;color:#344054}.series-legend i{display:inline-block;width:18px;height:3px;margin-right:5px;vertical-align:3px}
+.margin-list{display:grid;gap:11px}.margin-row{display:grid;grid-template-columns:125px 1fr 68px;align-items:center;gap:10px}.margin-label{font-size:11px;font-weight:700;color:#344054}.margin-track{height:12px;background:#edf0f3;border-radius:999px;overflow:hidden;border:1px solid #d8dde5}.margin-fill{height:100%;width:0;border-radius:999px;transition:width .4s ease}.margin-fill.good{background:#25a36f}.margin-fill.warn{background:#e1a02e}.margin-fill.bad{background:#d95b5b}.margin-value{text-align:right;font:700 11px "Times New Roman",serif}.margin-note{grid-column:2/4;margin-top:-7px;font-size:9px;color:#667085}
+.profile{grid-template-columns:145px 1fr}.avatar-wrap{text-align:center}.avatar{position:relative;width:120px;height:120px;margin:auto;overflow:hidden;background:linear-gradient(145deg,#0b1830,#0b6571)}.avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.photo-label{display:inline-block;margin-top:8px;padding:6px 8px;border:1px solid #cdd5df;border-radius:6px;background:#fff;color:#344054;font-size:10px;font-weight:700;cursor:pointer}.profile-editor{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}.profile-editor summary{cursor:pointer;font-size:12px;font-weight:800;color:#344054}.profile-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}@media(max-width:850px){.profile-fields{grid-template-columns:1fr}.profile{grid-template-columns:1fr}}
+.publication-sheet{max-width:980px;margin:0 auto;background:#fff;border:1px solid #cfd4dc;padding:34px 42px;color:#111;font-family:"Times New Roman",Times,serif}.publication-sheet h1{text-align:center;font-size:21px;margin:0 0 5px}.publication-sheet .authors{text-align:center;font-size:12px}.publication-sheet h2{font-size:14px;border-bottom:1px solid #111;padding-bottom:3px;margin-top:20px}.pub-kpis{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #111}.pub-kpis>div{padding:8px;border-right:1px solid #111;font-size:11px}.pub-kpis>div:nth-child(3n){border-right:0}.pub-figures{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pub-figure{border:1px solid #999;padding:5px}.pub-figure svg{height:255px}.pub-caption{text-align:center;font-size:10px;margin-top:4px}.pub-equations{text-align:center;font-size:13px;line-height:1.8}.pub-actions{display:flex;justify-content:center;gap:8px;margin-bottom:14px}
+.report-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}.report-sheet{max-width:1080px;margin:0 auto;background:#fff;border:1px solid #cfd4dc;border-radius:10px;padding:34px 42px;box-shadow:0 3px 18px rgba(15,23,42,.06)}.report-cover{padding:18px 20px 22px;border-radius:10px;background:linear-gradient(120deg,#0b1830,#124d69);color:#fff;margin-bottom:20px}.report-cover h1{font-size:24px;margin:0 0 6px}.report-cover p{font-size:12px;color:#dceaf4;margin:0}.report-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.report-meta span{font-size:10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 8px}.report-toc{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:20px}.report-toc a{text-decoration:none;color:#344054;background:#f7f9fc;border:1px solid #d7dde6;border-radius:7px;padding:8px;font-size:10px;font-weight:700}.report-step{display:grid;grid-template-columns:46px 1fr;gap:13px;padding:19px 0;border-top:1px solid #dfe3e9;break-inside:avoid}.report-step:first-of-type{border-top:0}.report-no{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#e8f2ff;color:#1d4ed8;font-weight:900}.report-step h2{font-size:16px;margin:1px 0 9px;color:#172b4d}.report-step p{font-size:12px;line-height:1.55;color:#475467}.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.equation-panel,.numeric-panel{border-radius:7px;padding:11px 13px;font:13px/1.65 "Times New Roman",Times,serif}.equation-panel{background:#f5f6f8;border:1px solid #d8dde5;color:#111}.numeric-panel{background:#edf9f4;border:1px solid #a6d8c4;color:#075c40}.equation-panel b,.numeric-panel b{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px}.report-table{margin-top:10px}.report-table th{position:static}.report-conclusion{padding:14px;background:#eef5ff;border-left:4px solid #2563eb;border-radius:7px;font-size:12px;line-height:1.55}.report-figure{margin-top:12px;border:1px solid #cfd4dc;padding:6px}.report-figure svg{height:280px}.report-figure .pub-caption{font-family:"Times New Roman",serif}.pass-text{color:#08724d;font-weight:800}.warn-text{color:#94600d;font-weight:800}@media(max-width:800px){.report-sheet{padding:20px 16px}.report-toc{grid-template-columns:1fr 1fr}.report-grid{grid-template-columns:1fr}.report-step{grid-template-columns:36px 1fr}}
+@media print{body{background:#fff}body.print-publication header,body.print-publication nav,body.print-publication .footer,body.print-publication .page:not(#page-publication),body.print-publication #chartTip,body.print-publication #infoPop,body.print-publication .pub-actions{display:none!important}body.print-publication main{max-width:none;padding:0}body.print-publication #page-publication{display:block!important}body.print-publication .publication-sheet{border:0;max-width:none;padding:12mm;box-shadow:none}body.print-report header,body.print-report nav,body.print-report .footer,body.print-report .page:not(#page-report),body.print-report #chartTip,body.print-report #infoPop,body.print-report .report-actions{display:none!important}body.print-report main{max-width:none;padding:0}body.print-report #page-report{display:block!important}body.print-report .report-sheet{border:0;max-width:none;padding:10mm;box-shadow:none}.pub-figure,.report-step{break-inside:avoid}.publication-sheet table,.report-sheet table{font-size:9pt}.publication-sheet th,.report-sheet th{position:static}}
+</style>
+</head>
+<body>
+<header>
+  <h1>VTC Design Explorer <span class="version-chip">v3.0</span></h1>
+  <p>Sensor → application requirements → channel count → design limits → feasibility → recommended initial VTC specification → parameter sweeps. All calculations are first-order design estimates for a constant-current voltage-to-time converter.</p>
+  <div class="header-meta"><span>Interactive design aid</span><span>IEEE-ready figures</span><span>Self-contained HTML</span></div>
+</header>
+
+<nav aria-label="Application pages">
+  <button class="navbtn active" data-page="design">Design Explorer</button>
+  <button class="navbtn" data-page="simulation">VTC Simulation</button>
+  <button class="navbtn" data-page="abbreviations">Abbreviations</button>
+  <button class="navbtn" data-page="about">About Me &amp; Contact</button>
+  <button class="navbtn" data-page="report">Design Report</button>
+  <button class="navbtn" data-page="publication">Publication Mode</button>
+</nav>
+
+<main>
+<section id="page-design" class="page active">
+<div class="workflow" aria-label="Design workflow">
+  <button class="stepbtn active" data-step="sensor"><b>1</b>Sensor</button>
+  <button class="stepbtn" data-step="requirements"><b>2</b>Requirements</button>
+  <button class="stepbtn" data-step="limits"><b>3</b>Design limits</button>
+  <button class="stepbtn" data-step="results"><b>4</b>Results</button>
+  <button class="stepbtn" data-step="simulation"><b>5</b>Simulation</button>
+</div>
+<div class="grid">
+
+<section class="card result-card span-12">
+  <h2>Design overview</h2>
+  <div class="dashboard">
+    <div id="topStatus" class="dash-status warn"><b>Awaiting calculation</b><span class="small">Run the recommendation engine.</span></div>
+    <div class="dash-kpi result"><div class="l">Recommended C<sub>INT</sub></div><div class="v" id="dashC">—</div></div>
+    <div class="dash-kpi result"><div class="l">Recommended I<sub>REF</sub></div><div class="v" id="dashI">—</div></div>
+    <div class="dash-kpi result"><div class="l">K<sub>VTC</sub></div><div class="v" id="dashK">—</div></div>
+    <div class="dash-kpi result"><div class="l">Temperature resolution</div><div class="v" id="dashRes">—</div></div>
+    <div class="dash-kpi result"><div class="l">Maximum conversion time</div><div class="v" id="dashTime">—</div></div>
+  </div>
+</section>
+
+<section class="card theory-card span-12">
+  <h2>VTC signal-chain architecture</h2>
+  <div class="architecture">
+    <div class="arch-node input"><span class="icon">◉</span><b>Temperature sensor</b><small id="archSensor">Voltage-output sensor</small></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node theory"><span class="icon">⇄</span><b>Level shifter</b><small id="archWindow">Maps useful excursion to V<sub>WIN</sub></small></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node result"><span class="icon">∫</span><b>Voltage-to-time converter</b><small><span id="archC">C<sub>INT</sub> = —</span><br><span id="archI">I<sub>REF</sub> = —</span><br><span id="archK">K<sub>VTC</sub> = —</span></small></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node theory"><span class="icon">▦</span><b>Counter</b><small id="archClk">f<sub>CLK</sub> = —</small></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node input"><span class="icon">01</span><b>Digital output</b><small id="archBits">Counter code = —</small></div>
+  </div>
+</section>
+
+<section id="section-sensor" class="card input-card span-12">
+  <h2>1. Sensor definition</h2>
+  <div class="formgrid">
+    <div>
+      <label>Target sensor</label>
+      <select id="sensorPreset">
+        <option value="LMT70">LMT70 / LMT70A</option>
+        <option value="TMP236">TMP236</option>
+        <option value="CUSTOM">Custom voltage-output sensor</option>
+      </select>
+    </div>
+    <div><label>Temperature sensitivity S<sub>T</sub> (mV/°C, signed allowed)</label><input id="sens" type="number" step="0.01"></div>
+    <div><label>Representative output at 37°C (V, optional)</label><input id="v37" type="number" step="0.001"></div>
+    <div><label>Sensor accuracy / tolerance (±°C, context only)</label><input id="sensorAcc" type="number" step="0.01"></div>
+
+  </div>
+  <div id="customNote" class="small hidden" style="margin-top:8px">For a custom sensor, enter an externally accessible analog voltage sensitivity. The explorer uses |S<sub>T</sub>| for resolution calculations.</div>
+</section>
+
+<section id="section-requirements" class="card input-card span-12">
+  <h2>2. Application requirements</h2>
+  <div class="formgrid">
+
+    <div><label>T<sub>MIN</sub> (°C)</label><input id="tmin" type="number" step="0.1" value="35"></div>
+    <div><label>T<sub>MAX</sub> (°C)</label><input id="tmax" type="number" step="0.1" value="42"></div>
+    <div><label>Required temperature resolution ΔT<sub>REQ</sub> (°C)</label><input id="dtreq" type="number" step="0.01" value="0.1"></div>
+    <div><label>VTC-window margin (%)</label><input id="marginPct" type="number" step="1" value="25"></div>
+
+    <div><label>Manual VTC window (mV; 0 = automatic)</label><input id="manualVwin" type="number" step="0.1" value="0"></div>
+    <div><label>Number of channels N<sub>CH</sub></label><input id="nch" type="number" min="1" step="1" value="1"></div>
+    <div><label>Required per-channel conversion rate (S/s)</label><input id="fchReq" type="number" min="0.1" step="1" value="10"></div>
+    <div><label>Required timing counts per ΔT<sub>REQ</sub></label><input id="nReq" type="number" min="1" step="1" value="4"></div>
+  </div>
+</section>
+
+<section id="section-limits" class="card input-card span-12">
+  <h2>3. Architecture and design limits</h2>
+  <div class="formgrid">
+    <div><label>C<sub>INT,min</sub> (pF)</label><input id="cMin" type="number" step="0.1" value="10"></div>
+    <div><label>C<sub>INT,max</sub> (pF)</label><input id="cMax" type="number" step="0.1" value="100"></div>
+    <div><label>I<sub>REF,min</sub> (nA)</label><input id="iMin" type="number" step="0.01" value="0.5"></div>
+    <div><label>I<sub>REF,max</sub> (nA)</label><input id="iMax" type="number" step="0.1" value="600"></div>
+
+    <div><label>VTC conversion rate min (S/s)</label><input id="fvtcMin" type="number" step="100" value="1000"></div>
+    <div><label>VTC conversion rate max (S/s)</label><input id="fvtcMax" type="number" step="1000" value="100000"></div>
+    <div><label>VTC clock min (Hz)</label><input id="fclkMin" type="number" step="100000" value="1000000"></div>
+    <div><label>VTC clock max (Hz)</label><input id="fclkMax" type="number" step="1000000" value="10000000"></div>
+
+    <div><label>Reset interval t<sub>RST</sub> (µs)</label><input id="tReset" type="number" step="0.05" value="0.5"></div>
+    <div><label>Guard / latch interval t<sub>GUARD</sub> (µs)</label><input id="tGuard" type="number" step="0.05" value="1.0"></div>
+    <div><label>Settling interval t<sub>SET</sub> (µs)</label><input id="tSet" type="number" step="0.05" value="0.2"></div>
+    <div><label>MUX switching interval t<sub>MUX</sub> (µs, ignored for 1 ch)</label><input id="tMux" type="number" step="0.05" value="0.2"></div>
+
+    <div><label>Estimated integration-node leakage (pA)</label><input id="iLeak" type="number" step="1" value="10"></div>
+    <div><label>Maximum leakage fraction of I<sub>REF</sub> (%)</label><input id="leakPct" type="number" step="0.1" value="1"></div>
+    <div><label>Allocated VTC temperature error (°C)</label><input id="vtcErrTemp" type="number" step="0.01" value="0.02"></div>
+    <div><label>Assumed VTC supply for ramp power (V)</label><input id="vdd" type="number" step="0.1" value="1.0"></div>
+
+    <div>
+      <label>Optimization priority</label>
+      <select id="priority">
+        <option value="balanced">Balanced</option>
+        <option value="power">Lowest power</option>
+        <option value="resolution">Highest resolution</option>
+        <option value="throughput">Highest throughput</option>
+      </select>
+    </div>
+  </div>
+  <div class="btnrow">
+    <button id="runBtn">Calculate & Recommend</button>
+    <button id="resetBtn" class="secondary">Reset defaults</button>
+  </div>
+</section>
+
+<section id="section-results" class="card result-card span-12">
+  <h2>4. Feasibility and recommended initial VTC specification</h2>
+  <div id="statusBox" class="status warn"><span class="dot"></span><span>Run the calculation.</span></div>
+
+  <div class="kpis" style="margin-top:12px">
+    <div class="kpi"><div class="l">ΔVREQ</div><div class="v" id="kpiDvReq">—</div></div>
+    <div class="kpi"><div class="l">VTC input window</div><div class="v" id="kpiVwin">—</div></div>
+    <div class="kpi"><div class="l">Recommended K<sub>VTC</sub></div><div class="v" id="kpiK">—</div></div>
+    <div class="kpi"><div class="l">Temperature LSB</div><div class="v" id="kpiTlsb">—</div></div>
+  </div>
+
+  <div id="levelShiftNote" class="callout" style="margin-top:12px"></div>
+
+  <h3>RECOMMENDED INITIAL VTC SPECIFICATION</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th style="width:34%">Parameter</th><th>Recommended / calculated value</th></tr></thead>
+      <tbody id="specBody"></tbody>
+    </table>
+  </div>
+  <div class="btnrow">
+    <button id="copyBtn" class="secondary">Copy specification</button>
+    <button id="jsonBtn" class="secondary">Export JSON</button>
+    <button id="openReportBtn">Generate Full Design Report</button>
+    <button id="openPublicationBtn">Generate IEEE summary</button>
+  </div>
+</section>
+
+<section class="card result-card span-12">
+  <h2>Design-margin dashboard</h2>
+  <div class="sectionnote">A higher bar means more headroom at the recommended operating point. Values near a boundary are highlighted in amber or red.</div>
+  <div id="marginList" class="margin-list"></div>
+</section>
+
+<section class="card theory-card span-6">
+  <h2>5. C<sub>INT</sub> exploration</h2>
+  <div class="sectionnote">Sweeps your configured capacitor range while keeping the recommended VTC gain fixed. This reveals the required I<sub>REF</sub>, kT/C noise, reset-switch resistance, leakage margin, and ramp-current power.</div>
+  <div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <div>
+      <label>Displayed metric</label>
+      <select id="cMetric">
+        <option value="iref">Required IREF (nA)</option>
+        <option value="noise">kT/C temperature noise (°C rms)</option>
+        <option value="ron">Max reset RON (kΩ)</option>
+        <option value="power">Ramp-current power (nW)</option>
+        <option value="leak">Leakage / IREF (%)</option>
+      </select>
+    </div>
+  </div>
+  <div class="chartbox"><svg id="cChart"></svg></div>
+  <div id="cSummary" class="small" style="margin-top:8px"></div>
+</section>
+
+<section class="card theory-card span-6">
+  <h2>6. I<sub>REF</sub> exploration</h2>
+  <div class="sectionnote">Sweeps I<sub>REF</sub> using the recommended C<sub>INT</sub>. Regions are checked against minimum resolution, conversion-time, and leakage constraints.</div>
+  <div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <div>
+      <label>Displayed metric</label>
+      <select id="iMetric">
+        <option value="k">K_VTC (ms/V)</option>
+        <option value="tlsb">Temperature LSB (°C)</option>
+        <option value="tconv">Full-window conversion time (µs)</option>
+        <option value="counts">Counts per ΔTREQ</option>
+        <option value="power">Ramp-current power (nW)</option>
+      </select>
+    </div>
+  </div>
+  <div class="chartbox"><svg id="iChart"></svg></div>
+  <div id="iSummary" class="small" style="margin-top:8px"></div>
+</section>
+
+<section class="card theory-card span-6">
+  <h2>7. VTC conversion-rate exploration</h2>
+  <div class="sectionnote">Sweeps aggregate VTC conversion rate. The recommended C<sub>INT</sub>, I<sub>REF</sub>, and clock are held fixed, while available conversion time and K<sub>VTC,max</sub> change.</div>
+  <div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <div>
+      <label>Displayed metric</label>
+      <select id="fMetric">
+        <option value="kmax">K_VTC,max (ms/V)</option>
+        <option value="margin">Gain feasibility margin Kmax/Kselected</option>
+        <option value="fch">Ideal per-channel rate (S/s)</option>
+        <option value="tconvmax">Available conversion time (µs)</option>
+      </select>
+    </div>
+  </div>
+  <div class="chartbox"><svg id="fChart"></svg></div>
+  <div id="fSummary" class="small" style="margin-top:8px"></div>
+</section>
+
+<section class="card theory-card span-6">
+  <h2>8. C<sub>INT</sub>–I<sub>REF</sub> feasibility map</h2>
+  <div class="sectionnote">Each point corresponds to K<sub>VTC</sub> = C<sub>INT</sub>/I<sub>REF</sub> at the recommended conversion rate and clock.</div>
+  <div class="chartbox"><svg id="mapChart" aria-label="CINT and IREF feasibility map"></svg></div>
+  <div class="legend">
+    <span><i style="background:#2ca66f"></i>Feasible</span>
+    <span><i style="background:#e5a93f"></i>Resolution-limited</span>
+    <span><i style="background:#d95b5b"></i>Conversion-time-limited</span>
+    <span><i style="background:#8b5cf6"></i>Leakage-sensitive</span>
+    <span><i style="background:#111827"></i>Recommended point</span>
+  </div>
+</section>
+
+<section class="card span-12">
+  <h2>Calculation basis</h2>
+  <div class="small">
+    <p><code class="formula">ΔVREQ = |ST| ΔTREQ</code> &nbsp; 
+    <code class="formula">ΔVTEMP = |ST|(TMAX − TMIN)</code> &nbsp;
+    <code class="formula">VWIN = ΔVTEMP(1 + margin)</code> unless manually overridden.</p>
+    <p><code class="formula">KVTC,max = tCONV,max / VWIN</code> &nbsp;
+    <code class="formula">KVTC,min = NREQ /(fCLK ΔVREQ)</code> &nbsp;
+    <code class="formula">KVTC = CINT / IREF</code>.</p>
+    <p><code class="formula">VLSB = 1 /(fCLK KVTC)</code> &nbsp;
+    <code class="formula">TLSB = VLSB / |ST|</code> &nbsp;
+    <code class="formula">vn,C = √(kT/CINT)</code>.</p>
+    <p>The feasibility engine also checks aggregate channel throughput, reset/settling/guard overhead, IREF limits, and the user-defined leakage fraction. Power values shown are the <b>charging-current contribution only</b>, not total VTC power.</p>
+  </div>
+</section>
+
+</div>
+</section>
+
+<section id="page-simulation" class="page">
+  <div class="grid">
+    <section class="card simulation-card span-12">
+      <h2>VTC transfer simulation</h2>
+      <div class="sectionnote">The simulation uses the current sensor settings and recommended VTC operating point. For sensors with a large DC output, converter time is calculated after translating the useful sensor excursion to the VTC input window.</div>
+      <div class="sim-controls">
+        <div>
+          <label>Simulation samples</label>
+          <select id="simSamples"><option>51</option><option selected>101</option><option>201</option><option>501</option></select>
+        </div>
+        <div><label>VTC nonlinearity (% full scale)</label><input id="simNonlin" type="number" min="0" max="5" step="0.05" value="0.20"></div>
+        <div><label>Timing jitter (ns rms)</label><input id="simJitter" type="number" min="0" step="1" value="20"></div>
+        <div><label>Error-curve display</label><select id="showError"><option value="yes" selected>Show error curve</option><option value="no">Hide error curve</option></select></div>
+        <button id="refreshSim">Refresh simulation</button>
+        <button id="simCsvBtn" class="secondary">Export simulation CSV</button>
+      </div>
+      <div class="kpis sim-kpis">
+        <div class="kpi"><div class="l">Voltage-to-time gain K<sub>VTC</sub></div><div class="v" id="simKvtc">—</div></div>
+        <div class="kpi"><div class="l">Sensor sensitivity S<sub>T</sub></div><div class="v" id="simSt">—</div></div>
+        <div class="kpi"><div class="l">Time-temperature slope |dt/dT|</div><div class="v" id="simKt">—</div></div>
+      </div>
+      <div id="simEquation" class="callout" style="margin-top:12px"></div>
+    </section>
+
+    <section class="card simulation-card span-6">
+      <h2>Converter time versus sensor voltage</h2>
+      <div class="sectionnote">Ideal theory and a deterministic nonideal simulation are overlaid. Move the cursor over the curves for exact values.</div>
+      <div class="series-legend"><span><i style="background:#111"></i>Theoretical</span><span><i style="background:#0072b2"></i>Simulated</span><span><i style="background:#b2182b"></i>Recommended point</span></div>
+      <div class="chartbox"><svg id="vSimChart" aria-label="Converter time versus sensor voltage"></svg></div>
+      <div id="vSimSummary" class="small" style="margin-top:8px"></div>
+    </section>
+
+    <section class="card simulation-card span-6">
+      <h2>Converter time versus temperature</h2>
+      <div class="sectionnote">The slope combines the sensor sensitivity and VTC gain. Its sign depends on the sensor transfer slope.</div>
+      <div class="series-legend"><span><i style="background:#111"></i>Theoretical</span><span><i style="background:#0072b2"></i>Simulated</span><span><i style="background:#b2182b"></i>37°C operating point</span></div>
+      <div class="chartbox"><svg id="tSimChart" aria-label="Converter time versus temperature"></svg></div>
+      <div id="tSimSummary" class="small" style="margin-top:8px"></div>
+    </section>
+
+    <section id="errorChartCard" class="card theory-card span-12">
+      <h2>Simulated conversion-time error</h2>
+      <div class="sectionnote">The residual includes the selected full-scale nonlinearity and deterministic timing-jitter realization.</div>
+      <div class="chartbox"><svg id="errorSimChart" aria-label="Simulated conversion-time error"></svg></div>
+      <div id="errorSimSummary" class="small" style="margin-top:8px"></div>
+    </section>
+
+    <section class="card theory-card span-12">
+      <h2>Simulation data preview</h2>
+      <div class="scroll" style="max-height:330px">
+        <table><thead><tr><th>Temperature (°C)</th><th>Sensor voltage (V)</th><th>Translated VTC input (mV)</th><th>Theoretical time (µs)</th><th>Simulated time (µs)</th><th>Error (ns)</th><th>Clock counts</th></tr></thead><tbody id="simBody"></tbody></table>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section id="page-abbreviations" class="page">
+  <div class="grid">
+    <section class="card span-12">
+      <h2>Abbreviations and symbols</h2>
+      <div class="sectionnote">Definitions apply throughout the explorer. Units are shown where a quantity is used numerically.</div>
+      <div class="abbr-grid">
+        <div class="scroll" style="max-height:none"><table class="abbr-table"><thead><tr><th>Abbreviation</th><th>Definition</th></tr></thead><tbody>
+          <tr><td>VTC</td><td>Voltage-to-time converter</td></tr>
+          <tr><td>VLSB</td><td>Input-referred voltage represented by one timing count</td></tr>
+          <tr><td>TLSB</td><td>Temperature equivalent represented by one timing count</td></tr>
+          <tr><td>LSB</td><td>Least significant bit</td></tr>
+          <tr><td>MUX</td><td>Multiplexer</td></tr>
+          <tr><td>PVT</td><td>Process, voltage, and temperature variation</td></tr>
+          <tr><td>DC</td><td>Direct-current or steady sensor-output component</td></tr>
+          <tr><td>rms</td><td>Root mean square</td></tr>
+          <tr><td>S/s</td><td>Samples or conversions per second</td></tr>
+          <tr><td>RON</td><td>Reset-switch on-resistance</td></tr>
+        </tbody></table></div>
+        <div class="scroll" style="max-height:none"><table class="abbr-table"><thead><tr><th>Symbol</th><th>Definition</th></tr></thead><tbody>
+          <tr><td>S<sub>T</sub></td><td>Signed sensor temperature sensitivity (V/°C)</td></tr>
+          <tr><td>T<sub>MIN</sub>, T<sub>MAX</sub></td><td>Minimum and maximum temperatures (°C)</td></tr>
+          <tr><td>ΔT<sub>REQ</sub></td><td>Required temperature resolution (°C)</td></tr>
+          <tr><td>ΔV<sub>REQ</sub></td><td>Sensor-voltage change corresponding to ΔT<sub>REQ</sub> (V)</td></tr>
+          <tr><td>ΔV<sub>TEMP</sub></td><td>Useful sensor-voltage excursion over the temperature range (V)</td></tr>
+          <tr><td>V<sub>WIN</sub></td><td>Selected VTC input window (V)</td></tr>
+          <tr><td>V<sub>S</sub></td><td>Sensor output voltage (V)</td></tr>
+          <tr><td>V<sub>37</sub></td><td>Representative sensor output at 37°C (V)</td></tr>
+          <tr><td>V<sub>DD</sub></td><td>VTC supply voltage used for ramp-power estimation (V)</td></tr>
+          <tr><td>K<sub>VTC</sub></td><td>Voltage-to-time gain, Δt/ΔV = C<sub>INT</sub>/I<sub>REF</sub> (s/V)</td></tr>
+          <tr><td>K<sub>T</sub></td><td>Temperature-to-time slope, dt/dT = K<sub>VTC</sub>S<sub>T</sub> (s/°C)</td></tr>
+          <tr><td>C<sub>INT</sub></td><td>VTC integration capacitance (F)</td></tr>
+          <tr><td>I<sub>REF</sub></td><td>Reference current charging or discharging C<sub>INT</sub> (A)</td></tr>
+          <tr><td>I<sub>LEAK</sub></td><td>Estimated integration-node leakage current (A)</td></tr>
+          <tr><td>f<sub>CLK</sub></td><td>Timing-counter clock frequency (Hz)</td></tr>
+          <tr><td>f<sub>VTC</sub></td><td>Aggregate VTC conversion rate (S/s)</td></tr>
+          <tr><td>t<sub>CONV</sub></td><td>Voltage-dependent conversion or integration time (s)</td></tr>
+          <tr><td>t<sub>RST</sub></td><td>Reset interval (s)</td></tr>
+          <tr><td>t<sub>GUARD</sub></td><td>Guard or latch interval (s)</td></tr>
+          <tr><td>t<sub>SET</sub></td><td>Settling interval (s)</td></tr>
+          <tr><td>t<sub>MUX</sub></td><td>Multiplexer switching interval (s)</td></tr>
+          <tr><td>N<sub>CH</sub></td><td>Number of multiplexed measurement channels</td></tr>
+          <tr><td>N<sub>REQ</sub></td><td>Required clock counts per ΔT<sub>REQ</sub></td></tr>
+          <tr><td>k</td><td>Boltzmann constant, 1.380649 × 10<sup>−23</sup> J/K</td></tr>
+        </tbody></table></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section id="page-about" class="page">
+  <div class="grid">
+    <section class="card theory-card span-12">
+      <h2>About Me &amp; Contact</h2>
+      <div class="profile">
+        <div class="avatar-wrap">
+          <div class="avatar" aria-label="Profile photograph"><span>AM</span><img id="profilePhoto" class="hidden" alt="Ahmed Reda Mohamed"></div>
+          <label class="photo-label" for="photoInput">Upload photograph</label><input id="photoInput" class="hidden" type="file" accept="image/*">
+        </div>
+        <div>
+          <h2 style="font-size:22px;margin-bottom:4px">Ahmed Reda Mohamed</h2>
+          <p class="small" style="font-size:13px;margin-top:0">Electrical-engineering researcher developing low-power integrated circuits and intelligent sensor interfaces for biomedical and Internet-of-Things applications.</p>
+          <p class="small"><b>Research interests:</b> CMOS analog and mixed-signal IC design, voltage-to-time conversion, biomedical sensing, wearable physiological monitoring, RF energy harvesting, low-power IoT interfaces, PVT-robust circuits, and sensor-data validation.</p>
+          <p class="small"><b>Interdisciplinary Research Center for Communication Systems and Sensing (IRC-CSS)</b><br>King Fahd University of Petroleum and Minerals (KFUPM)<br>Dhahran 31261, Saudi Arabia</p>
+          <p class="small"><b>Department of Electrical Engineering</b><br>King Fahd University of Petroleum and Minerals (KFUPM)</p>
+          <div class="contact-links">
+            <a href="mailto:ahmed.mohamed@kfupm.edu.sa">Email: ahmed.mohamed@kfupm.edu.sa</a>
+            <a id="orcidLink" class="hidden" target="_blank" rel="noopener">ORCID</a>
+            <a id="scholarLink" class="hidden" target="_blank" rel="noopener">Google Scholar</a>
+            <a id="linkedinLink" class="hidden" target="_blank" rel="noopener">LinkedIn</a>
+          </div>
+          <details class="profile-editor">
+            <summary>Edit professional links</summary>
+            <div class="profile-fields">
+              <div><label>ORCID URL or identifier</label><input id="orcidInput" type="text" placeholder="0000-0000-0000-0000"></div>
+              <div><label>Google Scholar profile URL</label><input id="scholarInput" type="url" placeholder="https://scholar.google.com/..."></div>
+              <div><label>LinkedIn profile URL</label><input id="linkedinInput" type="url" placeholder="https://www.linkedin.com/in/..."></div>
+            </div>
+            <div class="btnrow"><button id="saveProfileBtn">Save profile</button><button id="clearPhotoBtn" class="secondary">Remove photograph</button></div>
+            <div class="small">Profile links and the selected photograph are stored only in this browser.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<section id="page-report" class="page">
+  <div class="report-actions">
+    <button id="generateReportBtn">Generate / Refresh Report</button>
+    <button id="printReportBtn">Print / Save PDF</button>
+    <button id="downloadReportBtn" class="secondary">Download Report HTML</button>
+    <button id="reportJsonBtn" class="secondary">Export Report JSON</button>
+  </div>
+  <article id="reportSheet" class="report-sheet">
+    <div class="report-cover">
+      <h1>VTC Design Calculation Report</h1>
+      <p>Step-by-step equations, numerical substitutions, selected operating point, and transfer simulation.</p>
+      <div class="report-meta"><span id="reportSensorChip">Sensor: —</span><span id="reportRangeChip">Range: —</span><span id="reportStatusChip">Status: —</span><span id="reportDateChip">Generated: —</span></div>
+    </div>
+    <div class="report-toc">
+      <a href="#report-step-1">1. Sensor model</a><a href="#report-step-2">2. Requirements</a><a href="#report-step-3">3. Timing</a><a href="#report-step-4">4. Gain limits</a>
+      <a href="#report-step-5">5. Operating point</a><a href="#report-step-6">6. Resolution</a><a href="#report-step-7">7. Nonidealities</a><a href="#report-step-8">8. Simulation</a>
+    </div>
+    <div id="reportContent"><div class="callout">Run the design calculation to generate the complete report.</div></div>
+  </article>
+</section>
+
+<section id="page-publication" class="page">
+  <div class="pub-actions">
+    <button id="refreshPublicationBtn">Refresh summary</button>
+    <button id="printPublicationBtn">Print / Save PDF</button>
+    <button id="downloadPublicationBtn" class="secondary">Download summary HTML</button>
+  </div>
+  <article id="publicationSheet" class="publication-sheet">
+    <h1>Voltage-to-Time Converter Initial Design Summary</h1>
+    <div class="authors">Ahmed Reda Mohamed — King Fahd University of Petroleum and Minerals (KFUPM)</div>
+    <p id="pubIntro" style="font-size:11px;text-align:justify"></p>
+    <h2>I. Recommended Operating Point</h2>
+    <div id="pubKpis" class="pub-kpis"></div>
+    <h2>II. Governing Equations</h2>
+    <div class="pub-equations">ΔV<sub>REQ</sub> = |S<sub>T</sub>|ΔT<sub>REQ</sub> &nbsp;&nbsp; K<sub>VTC</sub> = C<sub>INT</sub>/I<sub>REF</sub> &nbsp;&nbsp; t<sub>CONV</sub> = K<sub>VTC</sub>V<sub>VTC</sub><br>V<sub>LSB</sub> = 1/(f<sub>CLK</sub>K<sub>VTC</sub>) &nbsp;&nbsp; T<sub>LSB</sub> = V<sub>LSB</sub>/|S<sub>T</sub>|</div>
+    <h2>III. Design Figures</h2>
+    <div id="pubFigures" class="pub-figures"></div>
+    <h2>IV. Initial Specification</h2>
+    <table><thead><tr><th>Parameter</th><th>Recommended / calculated value</th></tr></thead><tbody id="pubSpecBody"></tbody></table>
+    <p style="font-size:9px;margin-top:16px"><b>Note:</b> These are first-order design estimates. Verify the selected operating point with the exact sensor transfer curve, transistor-level PVT analysis, mismatch Monte Carlo simulation, and post-layout parasitic extraction.</p>
+  </article>
+</section>
+
+<div id="chartTip" class="chart-tip" role="status" aria-live="polite"></div>
+<div id="infoPop" class="info-pop" role="tooltip"></div>
+<div class="footer">VTC Design Explorer v3.0 — first-order engineering design aid. Numerical recommendations should be verified with the selected sensor transfer curve and transistor-level PVT/Monte Carlo simulations before implementation.</div>
+</main>
+
+<script>
+const presets = {
+  LMT70:{sens:-5.19,v37:0.91,acc:0.13},
+  TMP236:{sens:19.5,v37:1.122,acc:0.5},
+  CUSTOM:{sens:10,v37:0.5,acc:0.5}
+};
+const $ = id => document.getElementById(id);
+let last = null;
+let simRows = [];
+let reportData = null;
+const chartRegistry = {};
+const chartView = {};
+
+function num(id){ return parseFloat($(id).value); }
+function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+function logspace(a,b,n){
+  if(a<=0||b<=0) return [];
+  const la=Math.log(a), lb=Math.log(b), out=[];
+  for(let i=0;i<n;i++) out.push(Math.exp(la+(lb-la)*i/(n-1)));
+  return out;
+}
+function fmt(x,unit="",digits=3){
+  if(!Number.isFinite(x)) return "—";
+  let ax=Math.abs(x), s;
+  if(ax!==0 && (ax>=1e5 || ax<1e-3)) s=x.toExponential(2);
+  else s=Number(x.toFixed(digits)).toString();
+  return s+(unit?` ${unit}`:"");
+}
+function ceilBits(n){ return Math.max(1,Math.ceil(Math.log2(Math.max(2,n+1)))); }
+
+function loadPreset(){
+  const p=presets[$("sensorPreset").value];
+  $("sens").value=p.sens;
+  $("v37").value=p.v37;
+  $("sensorAcc").value=p.acc;
+  $("customNote").classList.toggle("hidden",$("sensorPreset").value!=="CUSTOM");
+}
+$("sensorPreset").addEventListener("change",()=>{loadPreset(); calculate();});
+
+function getInputs(){
+  return {
+    sensor:$("sensorPreset").value,
+    sens:num("sens")/1000, v37:num("v37"), acc:num("sensorAcc"),
+    tmin:num("tmin"), tmax:num("tmax"), dT:num("dtreq"), margin:num("marginPct")/100,
+    manualVwin:num("manualVwin")/1000, nch:Math.max(1,Math.round(num("nch"))),
+    fchReq:num("fchReq"), nReq:num("nReq"),
+    cMin:num("cMin")*1e-12, cMax:num("cMax")*1e-12,
+    iMin:num("iMin")*1e-9, iMax:num("iMax")*1e-9,
+    fvtcMin:num("fvtcMin"), fvtcMax:num("fvtcMax"),
+    fclkMin:num("fclkMin"), fclkMax:num("fclkMax"),
+    tReset:num("tReset")*1e-6, tGuard:num("tGuard")*1e-6,
+    tSet:num("tSet")*1e-6, tMux:num("tMux")*1e-6,
+    iLeak:num("iLeak")*1e-12, leakPct:num("leakPct")/100,
+    vtcErrTemp:num("vtcErrTemp"), vdd:num("vdd"), priority:$("priority").value
+  };
+}
+function validate(x){
+  const errs=[];
+  if(!(x.tmax>x.tmin)) errs.push("TMAX must be greater than TMIN.");
+  if(!(Math.abs(x.sens)>0)) errs.push("Sensor sensitivity must be non-zero.");
+  if(!(x.dT>0)) errs.push("Required temperature resolution must be positive.");
+  if(!(x.cMax>=x.cMin && x.cMin>0)) errs.push("Capacitance limits are invalid.");
+  if(!(x.iMax>=x.iMin && x.iMin>0)) errs.push("IREF limits are invalid.");
+  if(!(x.fvtcMax>=x.fvtcMin && x.fvtcMin>0)) errs.push("VTC-rate limits are invalid.");
+  if(!(x.fclkMax>=x.fclkMin && x.fclkMin>0)) errs.push("Clock limits are invalid.");
+  if(!(x.nReq>=1)) errs.push("Required timing counts must be at least 1.");
+  return errs;
+}
+function calcBase(x){
+  const S=Math.abs(x.sens);
+  const dVreq=S*x.dT;
+  const dVtemp=S*(x.tmax-x.tmin);
+  const vwin=x.manualVwin>0 ? x.manualVwin : dVtemp*(1+x.margin);
+  const overhead=x.tReset+x.tGuard+x.tSet+(x.nch>1?x.tMux:0);
+  const minAggregate=x.nch*x.fchReq;
+  const vErr=S*x.vtcErrTemp;
+  return {S,dVreq,dVtemp,vwin,overhead,minAggregate,vErr};
+}
+function candidateScore(c,x,b){
+  const lpos=(v,a,z)=> clamp((Math.log(v)-Math.log(a))/(Math.log(z)-Math.log(a)||1),0,1);
+  const pRate=lpos(c.fvtc,Math.max(x.fvtcMin,b.minAggregate),x.fvtcMax);
+  const pClk=lpos(c.fclk,x.fclkMin,x.fclkMax);
+  const pC=lpos(c.C,x.cMin,x.cMax);
+  const pI=lpos(c.I,x.iMin,x.iMax);
+  const resNorm=Math.min(1,c.counts/Math.max(x.nReq,1));
+  if(x.priority==="power"){
+    return 0.35*pClk+0.20*pRate+0.35*pI+0.10*pC - 0.10*resNorm;
+  }
+  if(x.priority==="resolution"){
+    return Math.log10(c.tlsb+1e-15) + 0.05*pI + 0.05*pRate;
+  }
+  if(x.priority==="throughput"){
+    return -3*pRate + 0.2*pClk + 0.15*pI - 0.05*resNorm;
+  }
+  // balanced: prefer geometric-middle rate/clock/C/I and 5-10 counts of margin
+  const mid = z => Math.abs(z-0.5);
+  const countPenalty=Math.abs(Math.log(Math.max(c.counts,1e-6)/Math.max(6,x.nReq)))/3;
+  return 0.9*mid(pRate)+0.6*mid(pClk)+0.45*mid(pC)+0.35*mid(pI)+0.45*countPenalty;
+}
+function findRecommendation(x,b){
+  const fLow=Math.max(x.fvtcMin,b.minAggregate);
+  if(fLow>x.fvtcMax) return null;
+  const fRates=logspace(fLow,x.fvtcMax,24);
+  const fClks=logspace(x.fclkMin,x.fclkMax,18);
+  const caps=logspace(x.cMin,x.cMax,22);
+  const fracs=[0.05,0.15,0.3,0.45,0.6,0.75,0.9,0.98];
+  let best=null, bestScore=Infinity;
+  for(const fvtc of fRates){
+    const Ts=1/fvtc;
+    const tconvMax=Ts-b.overhead;
+    if(tconvMax<=0) continue;
+    const kmax=tconvMax/b.vwin;
+    for(const fclk of fClks){
+      const kmin=x.nReq/(fclk*b.dVreq);
+      if(!(kmin<=kmax)) continue;
+      for(const C of caps){
+        for(const q of fracs){
+          const K=kmin+(kmax-kmin)*q;
+          const I=C/K;
+          if(I<x.iMin || I>x.iMax) continue;
+          const leakFrac=x.iLeak/I;
+          if(leakFrac>x.leakPct) continue;
+          const vlsb=1/(fclk*K);
+          const tlsb=vlsb/b.S;
+          const counts=fclk*K*b.dVreq;
+          const tFull=K*b.vwin;
+          const duty=tFull/Ts;
+          const iavg=I*duty;
+          const pRamp=x.vdd*iavg;
+          const nmax=fclk*tconvMax;
+          const bits=ceilBits(nmax);
+          const vn=Math.sqrt(1.380649e-23*300/C);
+          const tNoise=vn/b.S;
+          const ron=x.tReset/(-Math.log(1e-4)*C);
+          const c={fvtc,fclk,C,I,K,kmin,kmax,vlsb,tlsb,counts,tFull,tconvMax,Ts,duty,iavg,pRamp,nmax,bits,vn,tNoise,ron,leakFrac};
+          const s=candidateScore(c,x,b);
+          if(s<bestScore){bestScore=s;best=c;}
+        }
+      }
+    }
+  }
+  return best;
+}
+function reasonNoSolution(x,b){
+  const parts=[];
+  if(b.minAggregate>x.fvtcMax) parts.push(`Required aggregate rate ${fmt(b.minAggregate,"S/s")} exceeds the allowed VTC maximum.`);
+  const fLow=Math.max(x.fvtcMin,b.minAggregate);
+  const Ts=1/fLow;
+  const tconv=Ts-b.overhead;
+  if(tconv<=0) parts.push("Timing overhead consumes the complete conversion period at the lowest usable VTC rate.");
+  else{
+    const kmax=tconv/b.vwin;
+    const kmin=x.nReq/(x.fclkMax*b.dVreq);
+    if(kmin>kmax) parts.push("Even at maximum clock and minimum usable conversion rate, the required timing resolution is incompatible with the available conversion time.");
+  }
+  parts.push("Try increasing fCLK,max, reducing the minimum VTC rate, reducing NREQ, reducing VWIN/margin, or widening CINT/IREF limits.");
+  return parts.join(" ");
+}
+function nearestMode(f){
+  if(f>=50000) return "High-speed / array-scanning";
+  if(f>=5000) return "Balanced";
+  return "Precision / low-power";
+}
+function updateSpec(x,b,r){
+  $("kpiDvReq").textContent=fmt(b.dVreq*1e3,"mV",3);
+  $("kpiVwin").textContent=fmt(b.vwin*1e3,"mV",2);
+  $("kpiK").textContent=fmt(r.K*1e3,"ms/V",3);
+  $("kpiTlsb").textContent=fmt(r.tlsb,"°C/LSB",4);
+  $("dashC").textContent=fmt(r.C*1e12,"pF",2);
+  $("dashI").textContent=fmt(r.I*1e9,"nA",3);
+  $("dashK").textContent=fmt(r.K*1e3,"ms/V",3);
+  $("dashRes").textContent=fmt(r.tlsb,"°C/LSB",4);
+  $("dashTime").textContent=fmt(r.tconvMax*1e6,"µs",2);
+  $("archSensor").innerHTML=`${x.sensor==="CUSTOM"?"Custom sensor":x.sensor} · S<sub>T</sub> = ${fmt(x.sens*1e3,"mV/°C",2)}`;
+  $("archWindow").innerHTML=`Useful excursion ${fmt(b.dVtemp*1e3,"mV",2)} → V<sub>WIN</sub> ${fmt(b.vwin*1e3,"mV",2)}`;
+  $("archC").innerHTML=`C<sub>INT</sub> = ${fmt(r.C*1e12,"pF",2)}`;
+  $("archI").innerHTML=`I<sub>REF</sub> = ${fmt(r.I*1e9,"nA",3)}`;
+  $("archK").innerHTML=`K<sub>VTC</sub> = ${fmt(r.K*1e3,"ms/V",3)}`;
+  $("archClk").innerHTML=`f<sub>CLK</sub> = ${fmt(r.fclk/1e6,"MHz",3)}`;
+  $("archBits").textContent=`${r.bits+1}-bit recommended counter`;
+
+  const outputKnown=Number.isFinite(x.v37) && x.v37>0;
+  let note=`The automatic useful sensor span is ${fmt(b.dVtemp*1e3,"mV",2)} over ${fmt(x.tmin,"°C",1)} to ${fmt(x.tmax,"°C",1)}. `;
+  if(outputKnown && x.v37 > b.vwin*2){
+    note=`The sensor's representative absolute output near 37°C is ${fmt(x.v37,"V",3)}, while the selected VTC window is ${fmt(b.vwin*1e3,"mV",2)}. The recommendation therefore assumes input-window translation or equivalent differential processing so the VTC converts the useful temperature-dependent excursion rather than the full DC sensor output.`;
+  }else{
+    note=`The selected VTC window is ${fmt(b.vwin*1e3,"mV",2)}. Verify that the implemented input path maps the useful sensor-voltage excursion into this window.`;
+  }
+  $("levelShiftNote").textContent=note;
+
+  const spec = [
+    ["Target sensor", x.sensor==="CUSTOM" ? "Custom voltage-output sensor" : x.sensor.replace("LMT70","LMT70/LMT70A")],
+    ["Temperature range", `${fmt(x.tmin,"°C",1)} to ${fmt(x.tmax,"°C",1)}`],
+    ["Required temperature resolution", fmt(x.dT,"°C",3)],
+    ["|S_T|", fmt(b.S*1e3,"mV/°C",3)],
+    ["Sensor-voltage increment ΔVREQ", fmt(b.dVreq*1e3,"mV",3)],
+    ["Useful voltage excursion ΔVTEMP", fmt(b.dVtemp*1e3,"mV",2)],
+    ["VTC input window VWIN", fmt(b.vwin*1e3,"mV",2)],
+    ["Number of channels", `${x.nch}`],
+    ["Required per-channel rate", fmt(x.fchReq,"S/s",1)],
+    ["Recommended aggregate VTC rate", fmt(r.fvtc,"S/s",0)],
+    ["Ideal aggregate-rate / channel", fmt(r.fvtc/x.nch,"S/s",1)],
+    ["Recommended VTC clock", fmt(r.fclk/1e6,"MHz",3)],
+    ["K_VTC,min at selected clock", fmt(r.kmin*1e3,"ms/V",3)],
+    ["K_VTC,max at selected conversion rate", fmt(r.kmax*1e3,"ms/V",3)],
+    ["Recommended K_VTC", fmt(r.K*1e3,"ms/V",3)],
+    ["Recommended C_INT", fmt(r.C*1e12,"pF",2)],
+    ["Recommended I_REF", fmt(r.I*1e9,"nA",3)],
+    ["Input-referred VLSB", fmt(r.vlsb*1e6,"µV",2)],
+    ["Temperature LSB", fmt(r.tlsb,"°C/LSB",4)],
+    ["Timing counts per ΔTREQ", fmt(r.counts,"counts",2)],
+    ["Maximum conversion interval", fmt(r.tconvMax*1e6,"µs",2)],
+    ["Full-window conversion time at selected K", fmt(r.tFull*1e6,"µs",2)],
+    ["Counter maximum nominal code", fmt(r.nmax,"counts",0)],
+    ["Minimum counter width", `${r.bits} bit`],
+    ["Recommended counter with 1-bit margin", `${r.bits+1} bit`],
+    ["kT/C voltage noise at 300 K", fmt(r.vn*1e6,"µV rms",2)],
+    ["kT/C temperature equivalent", fmt(r.tNoise,"°C rms",5)],
+    ["Maximum reset-switch RON for 10^-4 residual", fmt(r.ron/1e3,"kΩ",2)],
+    ["Estimated leakage / IREF", fmt(100*r.leakFrac,"%",3)],
+    ["Allocated VTC input-error target", fmt(b.vErr*1e6,"µV",1)],
+    ["Ramp-current average contribution", fmt(r.iavg*1e9,"nA",2)],
+    ["Ramp-current power contribution", fmt(r.pRamp*1e9,"nW",2)],
+    ["Operating role", nearestMode(r.fvtc)]
+  ];
+  $("specBody").innerHTML=spec.map(([a,v])=>`<tr><td>${a}</td><td>${v}</td></tr>`).join("");
+  return spec;
+}
+function setStatus(kind,text){
+  const box=$("statusBox"); box.className="status "+kind;
+  box.innerHTML=`<span class="dot"></span><span>${text}</span>`;
+  const top=$("topStatus");top.className="dash-status "+kind;
+  const title=kind==="good"?"FEASIBLE":kind==="bad"?"NOT FEASIBLE":"AWAITING CALCULATION";
+  top.innerHTML=`<b>${title}</b><span class="small">${text}</span>`;
+}
+function calculate(){
+  const x=getInputs(), errs=validate(x);
+  if(errs.length){ setStatus("bad",errs.join(" ")); last=null; clearResults(); return; }
+  const b=calcBase(x);
+  const r=findRecommendation(x,b);
+  if(!r){
+    setStatus("bad","No feasible initial operating point found. "+reasonNoSolution(x,b));
+    $("specBody").innerHTML="";
+    last=null; clearResults(); clearCharts(); return;
+  }
+  setStatus("good",`FEASIBLE — ${nearestMode(r.fvtc)} recommendation found inside the user-defined CINT, IREF, conversion-rate, clock, timing, and leakage limits.`);
+  const spec=updateSpec(x,b,r);
+  last={x,b,r,spec};
+  renderAll();
+}
+function clearResults(){
+  ["dashC","dashI","dashK","dashRes","dashTime","kpiDvReq","kpiVwin","kpiK","kpiTlsb"].forEach(id=>$(id).textContent="—");
+  $("marginList").innerHTML="";
+}
+function clearCharts(){
+  ["cChart","iChart","fChart","mapChart","vSimChart","tSimChart","errorSimChart"].forEach(id=>$(id).innerHTML="");
+  $("simBody").innerHTML=""; simRows=[];
+}
+function showTip(ev,html){
+  const tip=$("chartTip");
+  tip.innerHTML=html; tip.style.display="block";
+  const pad=14, tw=tip.offsetWidth, th=tip.offsetHeight;
+  let left=ev.clientX+14, top=ev.clientY+14;
+  if(left+tw>window.innerWidth-pad) left=ev.clientX-tw-14;
+  if(top+th>window.innerHeight-pad) top=ev.clientY-th-14;
+  tip.style.left=`${Math.max(pad,left)}px`;tip.style.top=`${Math.max(pad,top)}px`;
+}
+function hideTip(){ $("chartTip").style.display="none"; }
+function ensureChartToolbar(svgId){
+  const svg=$(svgId), box=svg.closest(".chartbox");
+  if(!box || box.previousElementSibling?.classList.contains("chart-toolbar") && box.previousElementSibling.dataset.chart===svgId)return;
+  const bar=document.createElement("div");bar.className="chart-toolbar";bar.dataset.chart=svgId;
+  bar.innerHTML=`<span class="tool-label">Plot tools</span><button data-action="zoomIn" title="Zoom in">Zoom +</button><button data-action="zoomOut" title="Zoom out">Zoom −</button><button data-action="panLeft" title="Pan left">← Pan</button><button data-action="panRight" title="Pan right">Pan →</button><button data-action="reset" title="Reset view">Reset</button><span class="spacer"></span><button data-action="rec" class="active" title="Show or hide recommended point">Rec: On</button><button data-action="svg" title="Download vector figure">SVG</button><button data-action="png" title="Download raster figure">PNG</button><button data-action="csv" title="Export plotted data">CSV</button>`;
+  box.before(bar);
+  bar.addEventListener("click",ev=>{
+    const action=ev.target.dataset.action;if(!action)return;
+    const view=chartView[svgId]||(chartView[svgId]={zoom:1,pan:0,showRec:true});
+    if(action==="zoomIn")view.zoom=Math.min(16,view.zoom*1.5);
+    if(action==="zoomOut")view.zoom=Math.max(1,view.zoom/1.5);
+    if(action==="panLeft")view.pan-=.16/view.zoom;
+    if(action==="panRight")view.pan+=.16/view.zoom;
+    if(action==="reset"){view.zoom=1;view.pan=0;}
+    if(action==="rec"){view.showRec=!view.showRec;ev.target.textContent=`Rec: ${view.showRec?"On":"Off"}`;ev.target.classList.toggle("active",view.showRec);}
+    if(["zoomIn","zoomOut","panLeft","panRight","reset","rec"].includes(action)) redrawChart(svgId);
+    if(action==="svg")downloadSvg(svgId);
+    if(action==="png")downloadPng(svgId);
+    if(action==="csv")exportChartCsv(svgId);
+  });
+}
+function redrawChart(svgId){
+  if(svgId==="mapChart")renderMap();else drawLineChart(svgId);
+}
+function lineChart(svgId,data,xLabel,yLabel,recX,options={}){
+  const series=Array.isArray(data)&&data.length&&data[0]?.data?data:[{name:options.seriesName||yLabel,color:options.color||"#005f9e",data}];
+  chartRegistry[svgId]={type:"line",series,xLabel,yLabel,recX,options};
+  if(!chartView[svgId])chartView[svgId]={zoom:1,pan:0,showRec:true};
+  ensureChartToolbar(svgId);drawLineChart(svgId);
+}
+function viewDomain(min,max,logX,view){
+  const a=logX?Math.log(min):min,z=logX?Math.log(max):max,full=z-a,span=full/view.zoom;
+  let center=(a+z)/2+clamp(view.pan,-.5,.5)*full;
+  center=clamp(center,a+span/2,z-span/2);
+  return [logX?Math.exp(center-span/2):center-span/2,logX?Math.exp(center+span/2):center+span/2];
+}
+function drawLineChart(svgId){
+  const reg=chartRegistry[svgId];if(!reg)return;
+  const {series,xLabel,yLabel,recX,options}=reg,svg=$(svgId),W=700,H=310,m={l:72,r:20,t:18,b:52},view=chartView[svgId];
+  const all=series.flatMap(s=>s.data).filter(d=>Number.isFinite(d.x)&&Number.isFinite(d.y));if(!all.length){svg.innerHTML="";return;}
+  let fullMin=Math.min(...all.map(d=>d.x)),fullMax=Math.max(...all.map(d=>d.x));
+  const logX=false;if(fullMin===fullMax){fullMin-=1;fullMax+=1;}
+  const [xmin,xmax]=viewDomain(fullMin,fullMax,logX,view);
+  const visible=all.filter(d=>d.x>=xmin&&d.x<=xmax),ys=(visible.length?visible:all).map(d=>d.y);
+  let ymin=Math.min(...ys),ymax=Math.max(...ys);if(ymin===ymax){ymin-=Math.abs(ymin*.1)||1;ymax+=Math.abs(ymax*.1)||1;}const ypad=(ymax-ymin)*.07;ymin-=ypad;ymax+=ypad;
+  const px=x=>m.l+(logX?(Math.log(x)-Math.log(xmin))/(Math.log(xmax)-Math.log(xmin)||1):(x-xmin)/(xmax-xmin||1))*(W-m.l-m.r),py=y=>H-m.b-(y-ymin)/(ymax-ymin||1)*(H-m.t-m.b);
+  let g=`<rect width="${W}" height="${H}" fill="#fff"/><defs><clipPath id="clip-${svgId}"><rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}"/></clipPath></defs>`;
+  for(let i=0;i<=5;i++){const y=ymin+(ymax-ymin)*i/5,yy=py(y);g+=`<line x1="${m.l}" y1="${yy}" x2="${W-m.r}" y2="${yy}" stroke="#d5d5d5" stroke-width=".7" stroke-dasharray="2,3"/><line x1="${m.l-5}" y1="${yy}" x2="${m.l}" y2="${yy}" stroke="#111"/><text x="${m.l-8}" y="${yy+4}" font-size="11" text-anchor="end">${shortNum(y)}</text>`;}
+  for(let i=0;i<=5;i++){const x=logX?Math.exp(Math.log(xmin)+(Math.log(xmax)-Math.log(xmin))*i/5):xmin+(xmax-xmin)*i/5,xx=px(x);g+=`<line x1="${xx}" y1="${m.t}" x2="${xx}" y2="${H-m.b}" stroke="#e0e0e0" stroke-width=".7" stroke-dasharray="2,3"/><line x1="${xx}" y1="${H-m.b}" x2="${xx}" y2="${H-m.b+5}" stroke="#111"/><text x="${xx}" y="${H-m.b+19}" font-size="11" text-anchor="middle">${shortNum(x)}</text>`;}
+  series.forEach((s,idx)=>{const pts=s.data.filter(d=>Number.isFinite(d.y)&&d.x>=xmin&&d.x<=xmax).map(d=>`${px(d.x)},${py(d.y)}`).join(" ");g+=`<polyline clip-path="url(#clip-${svgId})" fill="none" stroke="${s.color||["#111","#0072b2","#d55e00"][idx%3]}" stroke-width="${s.width||2}" stroke-dasharray="${s.dash||"none"}" stroke-linejoin="round" stroke-linecap="round" points="${pts}"/>`;});
+  if(view.showRec&&Number.isFinite(recX)&&recX>=xmin&&recX<=xmax){const xx=px(recX);g+=`<line x1="${xx}" y1="${m.t}" x2="${xx}" y2="${H-m.b}" stroke="#b2182b" stroke-width="1.5" stroke-dasharray="6,4"/>`;}
+  g+=`<rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="none" stroke="#111"/><text x="${(m.l+W-m.r)/2}" y="${H-9}" font-size="12" font-weight="bold" text-anchor="middle">${xLabel}${logX?" (log scale)":""}</text><text transform="translate(17 ${(m.t+H-m.b)/2}) rotate(-90)" font-size="12" font-weight="bold" text-anchor="middle">${yLabel}</text><g class="cursor-lines" style="display:none"><line class="cursor-v" y1="${m.t}" y2="${H-m.b}" stroke="#111" stroke-dasharray="3,3"/><line class="cursor-h" x1="${m.l}" x2="${W-m.r}" stroke="#111" stroke-dasharray="3,3"/><circle class="cursor-dot" r="4" fill="#fff" stroke="#111"/></g><rect class="cursor-hit" x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="transparent"/>`;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=g;
+  const cursor=svg.querySelector(".cursor-lines"),vline=svg.querySelector(".cursor-v"),hline=svg.querySelector(".cursor-h"),dot=svg.querySelector(".cursor-dot");
+  svg.querySelector(".cursor-hit").addEventListener("pointermove",ev=>{const rect=svg.getBoundingClientRect(),ux=(ev.clientX-rect.left)/rect.width*W,xq=logX?Math.exp(Math.log(xmin)+(ux-m.l)/(W-m.l-m.r)*(Math.log(xmax)-Math.log(xmin))):xmin+(ux-m.l)/(W-m.l-m.r)*(xmax-xmin);const base=series[0].data.reduce((a,d)=>Math.abs(d.x-xq)<Math.abs(a.x-xq)?d:a,series[0].data[0]),xx=px(base.x),yy=py(base.y);cursor.style.display="inline";vline.setAttribute("x1",xx);vline.setAttribute("x2",xx);hline.setAttribute("y1",yy);hline.setAttribute("y2",yy);dot.setAttribute("cx",xx);dot.setAttribute("cy",yy);const values=series.map(s=>{const d=s.data.reduce((a,z)=>Math.abs(z.x-xq)<Math.abs(a.x-xq)?z:a,s.data[0]);return `<span style="color:${s.color||"#111"}">●</span> ${s.name}: ${fmt(d.y,options.yUnit||"",options.yDigits??4)}`;}).join("<br>");showTip(ev,`<strong>${options.tipTitle||"Graph cursor"}</strong>${xLabel}: ${fmt(base.x,options.xUnit||"",options.xDigits??4)}<br>${values}`);});
+  svg.addEventListener("pointerleave",()=>{cursor.style.display="none";hideTip();});
+}
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
+function svgMarkup(svgId){const clone=$(svgId).cloneNode(true);clone.setAttribute("xmlns","http://www.w3.org/2000/svg");clone.querySelectorAll(".cursor-lines,.cursor-hit").forEach(x=>x.remove());return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`;}
+function downloadSvg(svgId){downloadBlob(new Blob([svgMarkup(svgId)],{type:"image/svg+xml"}),`${svgId}_IEEE.svg`);}
+function downloadPng(svgId){const blob=new Blob([svgMarkup(svgId)],{type:"image/svg+xml"}),url=URL.createObjectURL(blob),img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=1400;c.height=620;const ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>downloadBlob(b,`${svgId}_IEEE.png`),"image/png");};img.src=url;}
+function exportChartCsv(svgId){const reg=chartRegistry[svgId];if(!reg)return;let lines=[];if(reg.csvRows){lines=reg.csvRows;}else{lines=[[reg.xLabel,...reg.series.map(s=>s.name)].join(",")];const base=reg.series[0].data;for(let i=0;i<base.length;i++)lines.push([base[i].x,...reg.series.map(s=>s.data[i]?.y??"")].join(","));}downloadBlob(new Blob([lines.join("\n")],{type:"text/csv"}),`${svgId}_data.csv`);}
+function shortNum(v){
+  const a=Math.abs(v);
+  if(a>=10000 || (a>0&&a<0.001)) return v.toExponential(1);
+  if(a>=100) return v.toFixed(0);
+  if(a>=10) return v.toFixed(1);
+  return v.toFixed(3);
+}
+function renderC(){
+  if(!last)return;
+  const {x,b,r}=last, metric=$("cMetric").value;
+  const caps=logspace(x.cMin,x.cMax,80);
+  const data=caps.map(C=>{
+    const I=C/r.K, vn=Math.sqrt(1.380649e-23*300/C), tnoise=vn/b.S;
+    const ron=x.tReset/(-Math.log(1e-4)*C), leak=x.iLeak/I;
+    const p=x.vdd*I*(r.tFull/r.Ts);
+    let y,label;
+    if(metric==="iref"){y=I*1e9;label="IREF (nA)"}
+    if(metric==="noise"){y=tnoise;label="kT/C temp. noise (°C rms)"}
+    if(metric==="ron"){y=ron/1e3;label="Max reset RON (kΩ)"}
+    if(metric==="power"){y=p*1e9;label="Ramp-current power (nW)"}
+    if(metric==="leak"){y=100*leak;label="Leakage / IREF (%)"}
+    return {x:C*1e12,y,label,I,tnoise,ron,p,leak};
+  });
+  lineChart("cChart",data,"CINT (pF)",data[0].label,r.C*1e12);
+  const lo=data[0],hi=data[data.length-1];
+  $("cSummary").innerHTML=`Across ${fmt(x.cMin*1e12,"pF",1)}–${fmt(x.cMax*1e12,"pF",1)}, required IREF changes from ${fmt(lo.I*1e9,"nA",3)} to ${fmt(hi.I*1e9,"nA",3)} at fixed K. The vertical marker is the recommended CINT = ${fmt(r.C*1e12,"pF",2)}.`;
+}
+function pointClass(I,K,kmin,kmax,x){
+  if(I<=0) return "bad";
+  if(x.iLeak/I>x.leakPct) return "leak";
+  if(K<kmin) return "res";
+  if(K>kmax) return "time";
+  return "ok";
+}
+function renderI(){
+  if(!last)return;
+  const {x,b,r}=last, metric=$("iMetric").value;
+  const is=logspace(x.iMin,x.iMax,90);
+  const data=is.map(I=>{
+    const K=r.C/I, tFull=K*b.vwin, vlsb=1/(r.fclk*K), tlsb=vlsb/b.S, counts=r.fclk*K*b.dVreq;
+    const p=x.vdd*I*(Math.min(tFull,r.Ts)/r.Ts);
+    const cls=pointClass(I,K,r.kmin,r.kmax,x);
+    let y,label;
+    if(metric==="k"){y=K*1e3;label="K_VTC (ms/V)"}
+    if(metric==="tlsb"){y=tlsb;label="Temperature LSB (°C)"}
+    if(metric==="tconv"){y=tFull*1e6;label="Full-window conversion time (µs)"}
+    if(metric==="counts"){y=counts;label="Counts per ΔTREQ"}
+    if(metric==="power"){y=p*1e9;label="Ramp-current power (nW)"}
+    return {x:I*1e9,y,label,cls,K,tFull,tlsb,counts,p};
+  });
+  lineChart("iChart",data,"IREF (nA)",data[0].label,r.I*1e9);
+  const feasible=data.filter(d=>d.cls==="ok");
+  $("iSummary").innerHTML=feasible.length?
+    `At CINT = ${fmt(r.C*1e12,"pF",2)}, the feasible IREF sweep spans approximately ${fmt(feasible[0].x,"nA",3)} to ${fmt(feasible[feasible.length-1].x,"nA",3)} under the current timing, resolution, and leakage limits. Recommended IREF = ${fmt(r.I*1e9,"nA",3)}.`:
+    `No IREF value in the selected range remains feasible when CINT is fixed at the recommended value under the current constraints.`;
+}
+function renderF(){
+  if(!last)return;
+  const {x,b,r}=last, metric=$("fMetric").value;
+  const fLow=Math.max(x.fvtcMin,b.minAggregate);
+  const fs=logspace(fLow,x.fvtcMax,90);
+  const data=fs.map(f=>{
+    const Ts=1/f, tc=Ts-b.overhead, kmax=tc>0?tc/b.vwin:NaN;
+    const margin=kmax/r.K;
+    const fch=f/x.nch;
+    let y,label;
+    if(metric==="kmax"){y=kmax*1e3;label="K_VTC,max (ms/V)"}
+    if(metric==="margin"){y=margin;label="Kmax / Kselected"}
+    if(metric==="fch"){y=fch;label="Ideal per-channel rate (S/s)"}
+    if(metric==="tconvmax"){y=tc*1e6;label="Available conversion time (µs)"}
+    return {x:f,y,label,kmax,margin,fch,tc};
+  });
+  lineChart("fChart",data,"Aggregate VTC rate (S/s)",data.find(d=>Number.isFinite(d.y))?.label||"",r.fvtc);
+  const feasible=data.filter(d=>Number.isFinite(d.margin)&&d.margin>=1);
+  $("fSummary").innerHTML=feasible.length?
+    `With the recommended K, the selected timing overhead supports aggregate rates up to approximately ${fmt(feasible[feasible.length-1].x,"S/s",0)} before conversion-time margin falls below unity. The required minimum aggregate rate from channel count is ${fmt(b.minAggregate,"S/s",0)}.`:
+    `The recommended K is not feasible over the displayed VTC-rate sweep.`;
+}
+function renderMap(){
+  if(!last)return;const {x,r}=last,svg=$("mapChart"),W=700,H=310,m={l:72,r:20,t:18,b:52};
+  if(!chartView.mapChart)chartView.mapChart={zoom:1,pan:0,showRec:true};const view=chartView.mapChart;
+  const [c0,c1]=viewDomain(x.cMin,x.cMax,false,view),[i0,i1]=viewDomain(x.iMin,x.iMax,true,{zoom:view.zoom,pan:0});
+  const pc=C=>m.l+(C-c0)/(c1-c0)*(W-m.l-m.r),pi=I=>H-m.b-(Math.log(I)-Math.log(i0))/(Math.log(i1)-Math.log(i0))*(H-m.t-m.b);
+  const nX=60,nY=44,col={ok:"#2ca66f",res:"#e5a93f",time:"#d95b5b",leak:"#8b5cf6"},names={ok:"Feasible",res:"Resolution-limited",time:"Conversion-time-limited",leak:"Leakage-sensitive"};
+  let g=`<rect width="${W}" height="${H}" fill="#fff"/><g>`;
+  for(let j=0;j<nX;j++){const ca=c0+(c1-c0)*j/nX,cb=c0+(c1-c0)*(j+1)/nX,C=(ca+cb)/2;for(let i=0;i<nY;i++){const ia=Math.exp(Math.log(i0)+(Math.log(i1)-Math.log(i0))*i/nY),ib=Math.exp(Math.log(i0)+(Math.log(i1)-Math.log(i0))*(i+1)/nY),I=Math.sqrt(ia*ib),cls=pointClass(I,C/I,r.kmin,r.kmax,x);g+=`<rect x="${pc(ca)}" y="${pi(ib)}" width="${pc(cb)-pc(ca)+.4}" height="${pi(ia)-pi(ib)+.4}" fill="${col[cls]}"/>`;}}
+  g+=`</g>`;for(let j=0;j<=5;j++){const C=c0+(c1-c0)*j/5,xx=pc(C);g+=`<line x1="${xx}" y1="${H-m.b}" x2="${xx}" y2="${H-m.b+5}" stroke="#111"/><text x="${xx}" y="${H-m.b+19}" font-size="11" text-anchor="middle">${shortNum(C*1e12)}</text>`;}for(let i=0;i<=5;i++){const I=Math.exp(Math.log(i0)+(Math.log(i1)-Math.log(i0))*i/5),yy=pi(I);g+=`<line x1="${m.l-5}" y1="${yy}" x2="${m.l}" y2="${yy}" stroke="#111"/><text x="${m.l-8}" y="${yy+4}" font-size="11" text-anchor="end">${shortNum(I*1e9)}</text>`;}
+  if(view.showRec&&r.C>=c0&&r.C<=c1&&r.I>=i0&&r.I<=i1)g+=`<circle cx="${pc(r.C)}" cy="${pi(r.I)}" r="6" fill="#111827" stroke="#fff" stroke-width="1.5"/>`;
+  g+=`<rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="none" stroke="#111"/><text x="${(m.l+W-m.r)/2}" y="${H-9}" font-size="12" font-weight="bold" text-anchor="middle">CINT (pF)</text><text transform="translate(17 ${(m.t+H-m.b)/2}) rotate(-90)" font-size="12" font-weight="bold" text-anchor="middle">IREF (nA, log scale)</text><g class="cursor-lines" style="display:none"><line class="cursor-v" y1="${m.t}" y2="${H-m.b}" stroke="#111" stroke-dasharray="3,3"/><line class="cursor-h" x1="${m.l}" x2="${W-m.r}" stroke="#111" stroke-dasharray="3,3"/></g><rect class="cursor-hit" x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="transparent"/>`;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=g;
+  const csvRows=["CINT_pF,IREF_nA,KVTC_ms_per_V,Classification"];for(let j=0;j<31;j++){const C=x.cMin+(x.cMax-x.cMin)*j/30;for(let i=0;i<25;i++){const I=Math.exp(Math.log(x.iMin)+(Math.log(x.iMax)-Math.log(x.iMin))*i/24),K=C/I,cls=pointClass(I,K,r.kmin,r.kmax,x);csvRows.push(`${C*1e12},${I*1e9},${K*1e3},${names[cls]}`);}}
+  chartRegistry.mapChart={type:"map",csvRows};ensureChartToolbar("mapChart");
+  const cursor=svg.querySelector(".cursor-lines"),vl=svg.querySelector(".cursor-v"),hl=svg.querySelector(".cursor-h");svg.querySelector(".cursor-hit").addEventListener("pointermove",ev=>{const rect=svg.getBoundingClientRect(),mx=(ev.clientX-rect.left)/rect.width*W,my=(ev.clientY-rect.top)/rect.height*H,C=c0+(mx-m.l)/(W-m.l-m.r)*(c1-c0),I=Math.exp(Math.log(i0)+(H-m.b-my)/(H-m.t-m.b)*(Math.log(i1)-Math.log(i0))),K=C/I,cls=pointClass(I,K,r.kmin,r.kmax,x);cursor.style.display="inline";vl.setAttribute("x1",mx);vl.setAttribute("x2",mx);hl.setAttribute("y1",my);hl.setAttribute("y2",my);showTip(ev,`<strong>${names[cls]}</strong>CINT: ${fmt(C*1e12,"pF",3)}<br>IREF: ${fmt(I*1e9,"nA",3)}<br>KVTC: ${fmt(K*1e3,"ms/V",4)}`);});svg.addEventListener("pointerleave",()=>{cursor.style.display="none";hideTip();});
+}
+function renderMargins(){
+  if(!last)return;const {x,b,r}=last;
+  const logBoundary=(v,lo,hi)=>100*clamp(Math.min(Math.log(v/lo),Math.log(hi/v))/(Math.log(hi/lo)/2||1),0,1);
+  const rows=[
+    ["Timing",100*(r.tconvMax-r.tFull)/r.tconvMax,`${fmt(r.tFull*1e6,"µs",2)} used of ${fmt(r.tconvMax*1e6,"µs",2)}`],
+    ["Resolution",100*(r.counts-x.nReq)/r.counts,`${fmt(r.counts,"counts",2)} available; ${fmt(x.nReq,"required",0)}`],
+    ["Leakage",100*(x.leakPct-r.leakFrac)/x.leakPct,`${fmt(r.leakFrac*100,"%",3)} estimated; ${fmt(x.leakPct*100,"%",2)} limit`],
+    ["Current range",logBoundary(r.I,x.iMin,x.iMax),`${fmt(r.I*1e9,"nA",3)} inside ${fmt(x.iMin*1e9,"",2)}–${fmt(x.iMax*1e9,"nA",1)}`],
+    ["Clock frequency",100*(x.fclkMax-r.fclk)/(x.fclkMax-x.fclkMin||1),`${fmt(r.fclk/1e6,"MHz",3)} selected; ${fmt(x.fclkMax/1e6,"MHz",2)} maximum`],
+    ["Throughput",100*(r.fvtc/x.nch-x.fchReq)/(r.fvtc/x.nch),`${fmt(r.fvtc/x.nch,"S/s",1)} available per channel; ${fmt(x.fchReq,"S/s",1)} required`]
+  ];
+  $("marginList").innerHTML=rows.map(([label,value,note])=>{const v=clamp(value,0,100),cls=v>=30?"good":v>=10?"warn":"bad";return `<div class="margin-row"><div class="margin-label">${label}</div><div class="margin-track"><div class="margin-fill ${cls}" style="width:${v}%"></div></div><div class="margin-value">${fmt(value,"%",1)}</div><div class="margin-note">${note}</div></div>`;}).join("");
+}
+function linearFit(rows,xKey,yKey){
+  const n=rows.length, mx=rows.reduce((s,d)=>s+d[xKey],0)/n, my=rows.reduce((s,d)=>s+d[yKey],0)/n;
+  let sxx=0,sxy=0,ssTot=0,ssRes=0;
+  for(const d of rows){sxx+=(d[xKey]-mx)**2;sxy+=(d[xKey]-mx)*(d[yKey]-my);}
+  const slope=sxy/(sxx||1), intercept=my-slope*mx;
+  for(const d of rows){const yh=intercept+slope*d[xKey];ssTot+=(d[yKey]-my)**2;ssRes+=(d[yKey]-yh)**2;}
+  return {slope,intercept,r2:ssTot?1-ssRes/ssTot:1};
+}
+function renderSimulation(){
+  if(!last)return;const {x,b,r}=last,n=Math.max(2,parseInt($("simSamples").value)||101),nonlin=clamp(num("simNonlin")/100,0,.05),jitter=Math.max(0,num("simJitter"))*1e-9;
+  const tempRows=[];for(let i=0;i<n;i++){const T=x.tmin+(x.tmax-x.tmin)*i/(n-1),Vs=x.v37+x.sens*(T-37);tempRows.push({T,Vs,i});}
+  const vLow=Math.min(...tempRows.map(d=>d.Vs)),vSpan=Math.max(...tempRows.map(d=>d.Vs))-vLow,tFS=r.K*vSpan;
+  simRows=tempRows.map(d=>{const Vvtc=d.Vs-vLow,u=vSpan?Vvtc/vSpan:0,tTheory=r.K*Vvtc,errNl=nonlin*tFS*Math.sin(2*Math.PI*u),errJ=jitter*(.75*Math.sin(12.9898*(d.i+1))+.35*Math.sin(3.17*(d.i+1))),tSim=Math.max(0,tTheory+errNl+errJ),error=tSim-tTheory,counts=r.fclk*tSim;return {...d,Vvtc,tTheory,tSim,error,counts};});
+  const fitV=linearFit(simRows,"Vs","tSim"),fitT=linearFit(simRows,"T","tSim"),idealFitT=linearFit(simRows,"T","tTheory");
+  $("simKvtc").textContent=fmt(r.K*1e3,"ms/V",4);
+  $("simSt").textContent=fmt(x.sens*1e3,"mV/°C",3);
+  $("simKt").textContent=fmt(Math.abs(idealFitT.slope)*1e6,"µs/°C",4);
+  $("simEquation").innerHTML=`<b>Model:</b> V<sub>S</sub>(T)=V<sub>37</sub>+S<sub>T</sub>(T−37°C), V<sub>VTC</sub>=V<sub>S</sub>−V<sub>S,min</sub>, and t<sub>ideal</sub>=K<sub>VTC</sub>V<sub>VTC</sub>. The simulated curve adds ${fmt(nonlin*100,"% FS",2)} nonlinearity and ${fmt(jitter*1e9,"ns rms",1)} timing jitter. K<sub>VTC</sub>=C<sub>INT</sub>/I<sub>REF</sub>=${fmt(r.K*1e3,"ms/V",4)}.`;
+  const sorted=[...simRows].sort((a,z)=>a.Vs-z.Vs),vSeries=[{name:"Theoretical",color:"#111",dash:"6,3",data:sorted.map(d=>({x:d.Vs,y:d.tTheory*1e6}))},{name:"Simulated",color:"#0072b2",data:sorted.map(d=>({x:d.Vs,y:d.tSim*1e6}))}],tSeries=[{name:"Theoretical",color:"#111",dash:"6,3",data:simRows.map(d=>({x:d.T,y:d.tTheory*1e6}))},{name:"Simulated",color:"#0072b2",data:simRows.map(d=>({x:d.T,y:d.tSim*1e6}))}];
+  lineChart("vSimChart",vSeries,"Sensor voltage, VS (V)","Converter time, tCONV (µs)",x.v37,{logX:false,tipTitle:"VTC voltage sweep",xUnit:"V",yUnit:"µs",xDigits:5,yDigits:3});
+  lineChart("tSimChart",tSeries,"Temperature, T (°C)","Converter time, tCONV (µs)",37>=x.tmin&&37<=x.tmax?37:(x.tmin+x.tmax)/2,{logX:false,tipTitle:"Temperature sweep",xUnit:"°C",yUnit:"µs",xDigits:3,yDigits:3});
+  lineChart("errorSimChart",simRows.map(d=>({x:d.T,y:d.error*1e9})),"Temperature, T (°C)","Time error (ns)",37>=x.tmin&&37<=x.tmax?37:null,{logX:false,tipTitle:"Nonideality residual",xUnit:"°C",yUnit:"ns",xDigits:3,yDigits:3,color:"#d55e00",seriesName:"Simulated error"});
+  $("errorChartCard").classList.toggle("hidden",$("showError").value!=="yes");
+  const maxErr=Math.max(...simRows.map(d=>Math.abs(d.error)));$("errorSimSummary").innerHTML=`Maximum absolute simulated error: <b>${fmt(maxErr*1e9,"ns",3)}</b>, equivalent to ${fmt(maxErr/(Math.abs(r.K*x.sens)||1),"°C",5)}.`;
+  $("vSimSummary").innerHTML=`Simulated linear-fit gain: <b>${fmt(fitV.slope*1e3,"ms/V",5)}</b>; theoretical CINT/IREF: <b>${fmt(r.C/r.I*1e3,"ms/V",5)}</b>; R² = ${fitV.r2.toFixed(6)}.`;
+  $("tSimSummary").innerHTML=`Theoretical dt/dT: <b>${fmt(idealFitT.slope*1e6,"µs/°C",5)}</b>; simulated fit: <b>${fmt(fitT.slope*1e6,"µs/°C",5)}</b>. Full-scale ideal conversion-time change: ${fmt(tFS*1e6,"µs",3)}.`;
+  $("simBody").innerHTML=simRows.map(d=>`<tr><td>${fmt(d.T,"",3)}</td><td>${fmt(d.Vs,"",6)}</td><td>${fmt(d.Vvtc*1e3,"",5)}</td><td>${fmt(d.tTheory*1e6,"",5)}</td><td>${fmt(d.tSim*1e6,"",5)}</td><td>${fmt(d.error*1e9,"",4)}</td><td>${fmt(d.counts,"",2)}</td></tr>`).join("");
+}
+function reportPanels(equation,numerical){return `<div class="report-grid"><div class="equation-panel"><b>Governing equation</b>${equation}</div><div class="numeric-panel"><b>Numerical substitution</b>${numerical}</div></div>`;}
+function reportStep(n,title,body,panels,extra=""){return `<section id="report-step-${n}" class="report-step"><div class="report-no">${n}</div><div><h2>${title}</h2><p>${body}</p>${panels}${extra}</div></section>`;}
+function renderDesignReport(){
+  if(!last)return;const {x,b,r}=last,sensor=x.sensor==="CUSTOM"?"Custom voltage-output sensor":x.sensor.replace("LMT70","LMT70/LMT70A"),vMinT=x.v37+x.sens*(x.tmin-37),vMaxT=x.v37+x.sens*(x.tmax-37),tOver=x.tReset+x.tGuard+x.tSet+(x.nch>1?x.tMux:0),minAgg=x.nch*x.fchReq,maxErr=simRows.length?Math.max(...simRows.map(d=>Math.abs(d.error))):0,tempErr=maxErr/(Math.abs(r.K*x.sens)||1),nonlin=num("simNonlin"),jitter=num("simJitter"),fullSim=r.K*b.dVtemp;
+  reportData={version:"3.0",generated:new Date().toISOString(),sensor,inputs:x,derived:b,recommendation:r,simulation:{samples:simRows.length,nonlinearity_percent_fs:nonlin,timing_jitter_ns_rms:jitter,ideal_full_scale_time_s:fullSim,maximum_absolute_error_s:maxErr,temperature_equivalent_error_C:tempErr}};
+  $("reportSensorChip").textContent=`Sensor: ${sensor}`;$("reportRangeChip").textContent=`Range: ${fmt(x.tmin,"°C",1)} to ${fmt(x.tmax,"°C",1)}`;$("reportStatusChip").textContent="Status: FEASIBLE";$("reportDateChip").textContent=`Generated: ${new Date().toLocaleString()}`;
+  const s1=reportStep(1,"Sensor transfer model",`The selected sensor is represented by a first-order voltage–temperature transfer curve referenced to 37°C. The signed sensitivity preserves whether the sensor voltage rises or falls with temperature.`,reportPanels(
+    `V<sub>S</sub>(T)=V<sub>37</sub>+S<sub>T</sub>(T−37°C)`,
+    `V<sub>S</sub>(${fmt(x.tmin,"°C",1)})=${fmt(x.v37,"V",4)}+(${fmt(x.sens*1e3,"mV/°C",3)})(${fmt(x.tmin-37,"°C",1)})=${fmt(vMinT,"V",6)}<br>V<sub>S</sub>(${fmt(x.tmax,"°C",1)})=${fmt(vMaxT,"V",6)}`),
+    `<table class="report-table"><tbody><tr><th>Sensor</th><td>${sensor}</td><th>Accuracy context</th><td>±${fmt(x.acc,"°C",3)}</td></tr><tr><th>V<sub>37</sub></th><td>${fmt(x.v37,"V",4)}</td><th>S<sub>T</sub></th><td>${fmt(x.sens*1e3,"mV/°C",3)}</td></tr></tbody></table>`);
+  const windowEq=x.manualVwin>0?`V<sub>WIN</sub>=V<sub>WIN,manual</sub>`:`V<sub>WIN</sub>=ΔV<sub>TEMP</sub>(1+M)`;
+  const s2=reportStep(2,"Application requirements and VTC input window",`The required temperature resolution is converted to an equivalent voltage step. The complete temperature span establishes the useful sensor excursion, and the configured margin determines the design window.`,reportPanels(
+    `ΔV<sub>REQ</sub>=|S<sub>T</sub>|ΔT<sub>REQ</sub><br>ΔV<sub>TEMP</sub>=|S<sub>T</sub>|(T<sub>MAX</sub>−T<sub>MIN</sub>)<br>${windowEq}`,
+    `ΔV<sub>REQ</sub>=${fmt(b.S*1e3,"mV/°C",3)}×${fmt(x.dT,"°C",3)}=${fmt(b.dVreq*1e3,"mV",4)}<br>ΔV<sub>TEMP</sub>=${fmt(b.S*1e3,"mV/°C",3)}×${fmt(x.tmax-x.tmin,"°C",2)}=${fmt(b.dVtemp*1e3,"mV",4)}<br>V<sub>WIN</sub>=${fmt(b.vwin*1e3,"mV",4)}`));
+  const s3=reportStep(3,"Channel throughput and timing budget",`The shared VTC must meet the aggregate channel rate after reset, settling, guard, and optional multiplexer overhead are removed from each sampling period.`,reportPanels(
+    `f<sub>AGG,min</sub>=N<sub>CH</sub>f<sub>CH,REQ</sub><br>T<sub>S</sub>=1/f<sub>VTC</sub><br>t<sub>CONV,max</sub>=T<sub>S</sub>−(t<sub>RST</sub>+t<sub>SET</sub>+t<sub>GUARD</sub>+t<sub>MUX</sub>)`,
+    `f<sub>AGG,min</sub>=${x.nch}×${fmt(x.fchReq,"S/s",1)}=${fmt(minAgg,"S/s",1)}<br>T<sub>S</sub>=1/${fmt(r.fvtc,"S/s",0)}=${fmt(r.Ts*1e6,"µs",3)}<br>t<sub>OH</sub>=${fmt(tOver*1e6,"µs",3)}, &nbsp; t<sub>CONV,max</sub>=${fmt(r.tconvMax*1e6,"µs",3)}`));
+  const s4=reportStep(4,"Feasible voltage-to-time gain interval",`The lower gain bound guarantees the required timing counts for one temperature step. The upper bound ensures the complete voltage window converts before the timing budget expires.`,reportPanels(
+    `K<sub>VTC,min</sub>=N<sub>REQ</sub>/(f<sub>CLK</sub>ΔV<sub>REQ</sub>)<br>K<sub>VTC,max</sub>=t<sub>CONV,max</sub>/V<sub>WIN</sub>`,
+    `K<sub>VTC,min</sub>=${fmt(x.nReq,"counts",0)}/(${fmt(r.fclk/1e6,"MHz",3)}×${fmt(b.dVreq*1e3,"mV",4)})=${fmt(r.kmin*1e3,"ms/V",5)}<br>K<sub>VTC,max</sub>=${fmt(r.tconvMax*1e6,"µs",3)}/${fmt(b.vwin*1e3,"mV",4)}=${fmt(r.kmax*1e3,"ms/V",5)}<br><span class="pass-text">K<sub>min</sub> ≤ K<sub>max</sub>: feasible</span>`));
+  const s5=reportStep(5,"Recommended VTC operating point",`The recommendation engine searches the allowed capacitance, current, conversion-rate, and clock ranges, then ranks feasible candidates using the selected optimization priority.`,reportPanels(
+    `K<sub>VTC</sub>=C<sub>INT</sub>/I<sub>REF</sub><br>t<sub>CONV,FS</sub>=K<sub>VTC</sub>V<sub>WIN</sub>`,
+    `K<sub>VTC</sub>=${fmt(r.C*1e12,"pF",3)}/${fmt(r.I*1e9,"nA",4)}=${fmt(r.K*1e3,"ms/V",5)}<br>t<sub>CONV,FS</sub>=${fmt(r.K*1e3,"ms/V",5)}×${fmt(b.vwin*1e3,"mV",4)}=${fmt(r.tFull*1e6,"µs",4)}<br>f<sub>CLK</sub>=${fmt(r.fclk/1e6,"MHz",4)}, counter=${r.bits+1} bits`));
+  const s6=reportStep(6,"Quantization and temperature resolution",`The counter clock converts the VTC time interval into a digital code. Input-referred voltage and temperature LSBs quantify the ideal quantization resolution.`,reportPanels(
+    `V<sub>LSB</sub>=1/(f<sub>CLK</sub>K<sub>VTC</sub>)<br>T<sub>LSB</sub>=V<sub>LSB</sub>/|S<sub>T</sub>|<br>N<sub>ΔT</sub>=f<sub>CLK</sub>K<sub>VTC</sub>ΔV<sub>REQ</sub>`,
+    `V<sub>LSB</sub>=1/(${fmt(r.fclk/1e6,"MHz",3)}×${fmt(r.K*1e3,"ms/V",5)})=${fmt(r.vlsb*1e6,"µV",4)}<br>T<sub>LSB</sub>=${fmt(r.vlsb*1e6,"µV",4)}/${fmt(b.S*1e3,"mV/°C",3)}=${fmt(r.tlsb,"°C/LSB",6)}<br>N<sub>ΔT</sub>=${fmt(r.counts,"counts",4)} ≥ ${fmt(x.nReq,"required",0)}`));
+  const s7=reportStep(7,"Noise, leakage, reset, and ramp power",`First-order nonideal estimates screen the operating point before transistor-level simulation. Ramp power is the reference-current charging contribution only.`,reportPanels(
+    `v<sub>n,C</sub>=√(kT/C<sub>INT</sub>)<br>R<sub>ON,max</sub>=t<sub>RST</sub>/[−ln(10<sup>−4</sup>)C<sub>INT</sub>]<br>P<sub>RAMP</sub>=V<sub>DD</sub>I<sub>AVG</sub>`,
+    `v<sub>n,C</sub>=${fmt(r.vn*1e6,"µV rms",4)} → ${fmt(r.tNoise,"°C rms",6)}<br>I<sub>LEAK</sub>/I<sub>REF</sub>=${fmt(r.leakFrac*100,"%",4)} (limit ${fmt(x.leakPct*100,"%",2)})<br>R<sub>ON,max</sub>=${fmt(r.ron/1e3,"kΩ",3)}<br>P<sub>RAMP</sub>=${fmt(r.pRamp*1e9,"nW",4)}`));
+  const s8=reportStep(8,"Sensor-to-time transfer simulation",`The simulation translates the useful sensor excursion to the VTC input, applies the selected gain, and optionally adds deterministic full-scale nonlinearity and timing jitter.`,reportPanels(
+    `V<sub>VTC</sub>=V<sub>S</sub>−V<sub>S,min</sub><br>t<sub>ideal</sub>=K<sub>VTC</sub>V<sub>VTC</sub><br>dt/dT=K<sub>VTC</sub>S<sub>T</sub>`,
+    `|dt/dT|=${fmt(Math.abs(r.K*x.sens)*1e6,"µs/°C",5)}<br>Δt<sub>ideal,FS</sub>=${fmt(fullSim*1e6,"µs",4)}<br>Nonlinearity=${fmt(nonlin,"% FS",2)}, jitter=${fmt(jitter,"ns rms",1)}<br>Maximum simulated error=${fmt(maxErr*1e9,"ns",4)} → ${fmt(tempErr,"°C",6)}`),
+    `<div id="reportVFigure" class="report-figure"></div><div id="reportErrorFigure" class="report-figure"></div>`);
+  const s9=reportStep(9,"Design decision and verification path",`<span class="pass-text">PASS:</span> the selected initial operating point satisfies the configured first-order constraints. The design should now proceed to circuit-level validation.`,`<div class="report-conclusion"><b>Recommended next checks:</b> exact sensor transfer-curve fitting; transistor-level DC and transient verification; process-voltage-temperature corners; mismatch Monte Carlo; comparator offset and delay; current-reference variation; capacitor tolerance; leakage over temperature; post-layout parasitics; and final calibration-error analysis.</div>`);
+  $("reportContent").innerHTML=s1+s2+s3+s4+s5+s6+s7+s8+s9;
+  if($("vSimChart").innerHTML)$("reportVFigure").appendChild(cloneFigure("vSimChart","Sensor voltage to theoretical and simulated conversion time (linear x-axis)."));
+  if($("errorSimChart").innerHTML)$("reportErrorFigure").appendChild(cloneFigure("errorSimChart","Simulated conversion-time residual versus temperature (linear x-axis)."));
+}
+const helpText={
+  sensorPreset:"Select a characterized sensor model or define a custom voltage-output sensor.",sens:"Signed slope ST = dVS/dT. Resolution calculations use its magnitude.",v37:"Representative sensor DC output at 37°C, used to reconstruct the voltage–temperature transfer curve.",sensorAcc:"Sensor accuracy is contextual and is not included in the VTC-only error allocation.",
+  tmin:"Lowest application temperature. It must be below TMAX.",tmax:"Highest application temperature. The difference TMAX−TMIN defines the useful voltage excursion.",dtreq:"Smallest required temperature increment. ΔVREQ = |ST|ΔTREQ.",marginPct:"Extra headroom added to the useful sensor-voltage excursion when the VTC window is selected automatically.",manualVwin:"Optional fixed input window. Enter 0 to use ΔVTEMP(1+margin).",nch:"Number of sensor channels sharing the VTC.",fchReq:"Minimum conversion rate required for each channel.",nReq:"Minimum clock counts assigned to one required temperature increment.",
+  cMin:"Minimum integration capacitance permitted by the architecture or process.",cMax:"Maximum integration capacitance permitted by area and loading constraints.",iMin:"Minimum reliable reference current.",iMax:"Maximum reference current allowed by power or circuit limits.",fvtcMin:"Minimum aggregate VTC conversion rate.",fvtcMax:"Maximum aggregate VTC conversion rate.",fclkMin:"Minimum counter clock frequency.",fclkMax:"Maximum counter clock frequency.",tReset:"Time allocated to reset the integration node.",tGuard:"Guard/latch overhead outside useful integration.",tSet:"Input and comparator settling allocation.",tMux:"Channel-multiplexer switching time; ignored for one channel.",iLeak:"Estimated parasitic current at the integration node.",leakPct:"Maximum allowed ratio ILEAK/IREF.",vtcErrTemp:"Temperature-error budget assigned to the VTC input path.",vdd:"Supply used only for the ramp-current power estimate.",priority:"Changes how feasible candidates are ranked; constraints are unchanged.",
+  cMetric:"Select the quantity displayed during the CINT sweep.",iMetric:"Select the quantity displayed during the IREF sweep.",fMetric:"Select the quantity displayed during the conversion-rate sweep.",simSamples:"Number of points in each ideal and nonideal transfer sweep.",simNonlin:"Peak deterministic nonlinearity as a percentage of full-scale conversion time (0–5%).",simJitter:"RMS-scale deterministic timing-jitter realization added to the simulated curve.",showError:"Show or hide the residual error plot; data remain available in CSV export."
+};
+function addInfoTooltips(){
+  Object.entries(helpText).forEach(([id,text])=>{const el=$(id);if(!el)return;const label=el.parentElement.querySelector("label");if(!label||label.querySelector(".info-btn"))return;const b=document.createElement("button");b.type="button";b.className="info-btn";b.textContent="i";b.setAttribute("aria-label",`Information: ${label.textContent}`);label.appendChild(b);const show=ev=>showInfo(ev,text);b.addEventListener("pointerenter",show);b.addEventListener("pointermove",show);b.addEventListener("focus",show);b.addEventListener("pointerleave",hideInfo);b.addEventListener("blur",hideInfo);});
+}
+function showInfo(ev,text){const pop=$("infoPop");pop.textContent=text;pop.style.display="block";const rect=ev.target.getBoundingClientRect(),left=Math.min(window.innerWidth-pop.offsetWidth-12,rect.right+8),top=Math.min(window.innerHeight-pop.offsetHeight-12,rect.top);pop.style.left=`${Math.max(10,left)}px`;pop.style.top=`${Math.max(10,top)}px`;}
+function hideInfo(){$("infoPop").style.display="none";}
+function safeStore(key,value){try{localStorage.setItem(key,value);return true;}catch(e){return false;}}
+function safeLoad(key){try{return localStorage.getItem(key)||"";}catch(e){return "";}}
+function updateProfile(){
+  const orcid=$("orcidInput").value.trim(),scholar=$("scholarInput").value.trim(),linkedin=$("linkedinInput").value.trim();
+  const orcidUrl=orcid?(orcid.startsWith("http")?orcid:`https://orcid.org/${orcid}`):"";[["orcidLink",orcidUrl],["scholarLink",scholar],["linkedinLink",linkedin]].forEach(([id,url])=>{const a=$(id);a.classList.toggle("hidden",!url);if(url)a.href=url;});
+}
+function loadProfile(){
+  $("orcidInput").value=safeLoad("vtc2_orcid");$("scholarInput").value=safeLoad("vtc2_scholar");$("linkedinInput").value=safeLoad("vtc2_linkedin");const photo=safeLoad("vtc2_photo");if(photo){$("profilePhoto").src=photo;$("profilePhoto").classList.remove("hidden");}updateProfile();
+}
+function cloneFigure(svgId,caption){const wrap=document.createElement("div");wrap.className="pub-figure";const clone=$(svgId).cloneNode(true);clone.querySelectorAll(".cursor-lines,.cursor-hit").forEach(n=>n.remove());wrap.appendChild(clone);const cap=document.createElement("div");cap.className="pub-caption";cap.textContent=caption;wrap.appendChild(cap);return wrap;}
+function renderPublication(){
+  if(!last)return;const {x,b,r,spec}=last;
+  $("pubIntro").textContent=`This summary presents a first-order initial design for a ${x.sensor==="CUSTOM"?"custom voltage-output":x.sensor} temperature-sensor interface operating from ${fmt(x.tmin,"°C",1)} to ${fmt(x.tmax,"°C",1)} with a required resolution of ${fmt(x.dT,"°C",3)}. The selected voltage-to-time converter operating point satisfies the configured timing, resolution, current, clock, leakage, and throughput limits.`;
+  const vals=[["Feasibility","PASS"],["CINT",fmt(r.C*1e12,"pF",2)],["IREF",fmt(r.I*1e9,"nA",3)],["KVTC",fmt(r.K*1e3,"ms/V",3)],["Temperature LSB",fmt(r.tlsb,"°C",4)],["Maximum tCONV",fmt(r.tconvMax*1e6,"µs",2)]];$("pubKpis").innerHTML=vals.map(([a,v])=>`<div><b>${a}</b><br>${v}</div>`).join("");$("pubSpecBody").innerHTML=spec.map(([a,v])=>`<tr><td>${a}</td><td>${v}</td></tr>`).join("");
+  const fig=$("pubFigures");fig.innerHTML="";[["cChart","Fig. 1. Integration-capacitance design sweep."],["iChart","Fig. 2. Reference-current design sweep."],["vSimChart","Fig. 3. Theoretical and simulated voltage-to-time transfer."],["errorSimChart","Fig. 4. Simulated conversion-time residual." ]].forEach(([id,cap])=>{if($(id).innerHTML)fig.appendChild(cloneFigure(id,cap));});
+}
+function renderAll(){ renderC();renderI();renderF();renderMap();renderSimulation();renderMargins();renderDesignReport();renderPublication(); }
+["cMetric","iMetric","fMetric"].forEach(id=>$(id).addEventListener("change",renderAll));
+function activatePage(name){document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===`page-${name}`));hideTip();hideInfo();window.scrollTo({top:0,behavior:"smooth"});if(name==="simulation")renderSimulation();if(name==="report")renderDesignReport();if(name==="publication")renderPublication();}
+function printMode(mode){const cls=`print-${mode}`,cleanup=()=>document.body.classList.remove(cls);document.body.classList.add(cls);window.addEventListener("afterprint",cleanup,{once:true});window.print();setTimeout(cleanup,1600);}
+document.querySelectorAll(".navbtn").forEach(btn=>btn.addEventListener("click",()=>activatePage(btn.dataset.page)));
+document.querySelectorAll(".stepbtn").forEach((btn,index)=>btn.addEventListener("click",()=>{document.querySelectorAll(".stepbtn").forEach((b,i)=>{b.classList.toggle("active",i===index);b.classList.toggle("done",i<index);});if(btn.dataset.step==="simulation"){activatePage("simulation");return;}const target=$(`section-${btn.dataset.step}`);if(target)target.scrollIntoView({behavior:"smooth",block:"start"});}));
+$("runBtn").addEventListener("click",()=>{calculate();if(last)document.querySelectorAll(".stepbtn").forEach((b,i)=>{b.classList.toggle("done",i<3);b.classList.toggle("active",i===3);});});
+$("refreshSim").addEventListener("click",renderSimulation);
+["simSamples","simNonlin","simJitter","showError"].forEach(id=>$(id).addEventListener("change",renderSimulation));
+$("simCsvBtn").addEventListener("click",()=>{
+  if(!simRows.length)return;
+  const lines=["Temperature_C,Sensor_voltage_V,Translated_VTC_input_V,Theoretical_time_s,Simulated_time_s,Error_s,Clock_counts",
+    ...simRows.map(d=>[d.T,d.Vs,d.Vvtc,d.tTheory,d.tSim,d.error,d.counts].map(v=>Number(v).toPrecision(12)).join(","))];
+  downloadBlob(new Blob([lines.join("\n")],{type:"text/csv"}),"vtc_transfer_simulation_v3.csv");
+});
+$("copyBtn").addEventListener("click",async()=>{
+  if(!last)return;
+  const txt=["RECOMMENDED INITIAL VTC SPECIFICATION",...last.spec.map(([a,v])=>`${a}: ${v}`)].join("\n");
+  try{await navigator.clipboard.writeText(txt);$("copyBtn").textContent="Copied";setTimeout(()=>$("copyBtn").textContent="Copy specification",1200);}catch(e){alert(txt)}
+});
+$("jsonBtn").addEventListener("click",()=>{
+  if(!last)return;
+  const obj={version:"3.0",generated:new Date().toISOString(),sensor:last.x.sensor,inputs:last.x,derived:last.b,recommendation:last.r,specification:Object.fromEntries(last.spec)};
+  downloadBlob(new Blob([JSON.stringify(obj,null,2)],{type:"application/json"}),"vtc_initial_specification_v3.json");
+});
+$("openReportBtn").addEventListener("click",()=>activatePage("report"));
+$("openPublicationBtn").addEventListener("click",()=>activatePage("publication"));
+$("refreshPublicationBtn").addEventListener("click",renderPublication);
+$("printPublicationBtn").addEventListener("click",()=>{renderPublication();printMode("publication");});
+$("downloadPublicationBtn").addEventListener("click",()=>{renderPublication();const css=document.querySelector("style").textContent,body=$("publicationSheet").outerHTML,doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>VTC IEEE Design Summary</title><style>${css}</style></head><body>${body}</body></html>`;downloadBlob(new Blob([doc],{type:"text/html"}),"VTC_IEEE_Design_Summary.html");});
+$("generateReportBtn").addEventListener("click",renderDesignReport);
+$("printReportBtn").addEventListener("click",()=>{renderDesignReport();printMode("report");});
+$("downloadReportBtn").addEventListener("click",()=>{renderDesignReport();const css=document.querySelector("style").textContent,body=$("reportSheet").outerHTML,doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>VTC Design Calculation Report</title><style>${css}</style></head><body>${body}</body></html>`;downloadBlob(new Blob([doc],{type:"text/html"}),"VTC_Design_Calculation_Report_v3.html");});
+$("reportJsonBtn").addEventListener("click",()=>{renderDesignReport();if(reportData)downloadBlob(new Blob([JSON.stringify(reportData,null,2)],{type:"application/json"}),"VTC_Design_Calculation_Report_v3.json");});
+$("saveProfileBtn").addEventListener("click",()=>{safeStore("vtc2_orcid",$("orcidInput").value.trim());safeStore("vtc2_scholar",$("scholarInput").value.trim());safeStore("vtc2_linkedin",$("linkedinInput").value.trim());updateProfile();const b=$("saveProfileBtn");b.textContent="Saved";setTimeout(()=>b.textContent="Save profile",1000);});
+$("photoInput").addEventListener("change",ev=>{const file=ev.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),size=360;c.width=size;c.height=size;const ctx=c.getContext("2d"),side=Math.min(img.width,img.height),sx=(img.width-side)/2,sy=(img.height-side)/2;ctx.drawImage(img,sx,sy,side,side,0,0,size,size);const data=c.toDataURL("image/jpeg",.86);$("profilePhoto").src=data;$("profilePhoto").classList.remove("hidden");safeStore("vtc2_photo",data);};img.src=reader.result;};reader.readAsDataURL(file);});
+$("clearPhotoBtn").addEventListener("click",()=>{$("profilePhoto").classList.add("hidden");$("profilePhoto").removeAttribute("src");safeStore("vtc2_photo","");$("photoInput").value="";});
+$("resetBtn").addEventListener("click",()=>{
+  $("sensorPreset").value="LMT70"; loadPreset();
+  const d={tmin:35,tmax:42,dtreq:.1,marginPct:25,manualVwin:0,nch:1,fchReq:10,nReq:4,
+    cMin:10,cMax:100,iMin:.5,iMax:600,fvtcMin:1000,fvtcMax:100000,fclkMin:1000000,fclkMax:10000000,
+    tReset:.5,tGuard:1,tSet:.2,tMux:.2,iLeak:10,leakPct:1,vtcErrTemp:.02,vdd:1};
+  Object.entries(d).forEach(([k,v])=>$(k).value=v);
+  $("priority").value="balanced"; calculate();
+});
+addInfoTooltips();loadProfile();loadPreset();calculate();
+</script>
+</body>
+</html>
