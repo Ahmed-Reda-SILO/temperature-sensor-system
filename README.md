@@ -108,6 +108,7 @@ If you use the **VTC Design Explorer** in research, publications, teaching, or t
 ## 📌 Version
 
 **VTC Design Explorer — v1.0**
+
 **VTC Design Explorer — v3.0**
 
 Built for rapid sensor-to-VTC specification and design-space exploration.
