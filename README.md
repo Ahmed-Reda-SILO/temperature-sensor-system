@@ -8,6 +8,7 @@
 
 > v1.0 is the stable baseline.  
 > v3.0 adds advanced design visualization, VTC simulation, design reports, publication mode, abbreviations, and contact information.
+
 ## ✨ What it does
 
 - 🎯 Supports **LMT70/LMT70A**, **TMP236**, and **Custom voltage-output sensors**
@@ -93,6 +94,14 @@ Open `VTC_Design_Explorer_v1_0_stable.html` directly in:
 **Chrome · Edge · Firefox**
 
 No installation is required.
+
+---
+
+## 📚 How to Cite
+
+If you use the **VTC Design Explorer** in research, publications, teaching, or technical reports, please cite:
+
+> A. R. Mohamed, “VTC Design Explorer: An Interactive Design Tool for Temperature-Sensor Voltage-to-Time Interfaces,” ver. 3.0, GitHub repository, Aug. 2026. [Online]. Available: https://github.com/Ahmed-Reda-SILO/temperature-sensor-system
 
 ---
 
