@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VTC Design Explorer v1.0</title>
+<style>
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --ink:#17202a; --muted:#667085;
+  --line:#d9dee7; --accent:#2563eb; --good:#0f8a5f; --warn:#b7791f;
+  --bad:#c43d3d; --violet:#7c3aed; --soft:#eef4ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif}
+header{padding:20px 24px;background:#111827;color:#fff}
+header h1{margin:0 0 5px;font-size:24px}
+header p{margin:0;color:#cfd6e4;font-size:13px;max-width:1100px}
+main{max-width:1500px;margin:0 auto;padding:18px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-7{grid-column:span 7}.span-6{grid-column:span 6}.span-5{grid-column:span 5}.span-4{grid-column:span 4}
+@media(max-width:1000px){.span-8,.span-7,.span-6,.span-5,.span-4{grid-column:span 12}}
+h2{font-size:17px;margin:0 0 12px} h3{font-size:14px;margin:14px 0 8px}
+.small{font-size:12px;color:var(--muted);line-height:1.45}
+.formgrid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px}
+@media(max-width:900px){.formgrid{grid-template-columns:repeat(2,minmax(130px,1fr))}}
+@media(max-width:560px){.formgrid{grid-template-columns:1fr}}
+label{font-size:11px;color:#475467;font-weight:650;display:block;margin-bottom:4px}
+input,select,button{font:inherit}
+input,select{width:100%;border:1px solid #cfd6df;border-radius:8px;padding:8px 9px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid #c7d7fe;border-color:#7aa2ff}
+button{border:0;border-radius:8px;padding:9px 12px;cursor:pointer;background:var(--accent);color:#fff;font-weight:700}
+button.secondary{background:#eef2f7;color:#1f2937;border:1px solid #cfd6df}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.status{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:9px;font-weight:800}
+.status.good{background:#eaf8f2;color:#086b49}.status.bad{background:#fdecec;color:#a12c2c}.status.warn{background:#fff8e8;color:#8a5a12}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:currentColor}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfcfe}
+.kpi .v{font-size:18px;font-weight:800;margin-top:3px}.kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:8px;border-bottom:1px solid #e7eaf0;text-align:left;vertical-align:top}
+th{font-size:11px;color:#475467;background:#f8fafc;position:sticky;top:0}
+.scroll{overflow:auto;max-height:430px;border:1px solid var(--line);border-radius:9px}
+.badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800}
+.badge.good{background:#e9f8f1;color:#086b49}.badge.warn{background:#fff4db;color:#8a5a12}.badge.bad{background:#fdeaea;color:#a12c2c}
+.callout{padding:10px 12px;background:var(--soft);border-left:4px solid var(--accent);border-radius:7px;font-size:12px;line-height:1.45}
+.chartbox{height:310px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:6px}
+svg{width:100%;height:100%;display:block}
+canvas{width:100%;height:360px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#475467;margin-top:8px}
+.legend span i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.sectionnote{font-size:11px;color:var(--muted);margin-top:-5px;margin-bottom:10px}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+code.formula{background:#f6f8fa;border:1px solid #e4e7ec;border-radius:6px;padding:2px 5px;font-size:11px}
+.footer{font-size:11px;color:var(--muted);padding:12px 2px 25px}
+</style>
+</head>
+<body>
+<header>
+  <h1>VTC Design Explorer <span style="font-size:13px;font-weight:500">v1.0</span></h1>
+  <p>Sensor → application requirements → channel count → design limits → feasibility → recommended initial VTC specification → parameter sweeps. All calculations are first-order design estimates for a constant-current voltage-to-time converter.</p>
+</header>
+
+<main>
+<div class="grid">
+
+<section class="card span-12">
+  <h2>1. Sensor and application definition</h2>
+  <div class="formgrid">
+    <div>
+      <label>Target sensor</label>
+      <select id="sensorPreset">
+        <option value="LMT70">LMT70 / LMT70A</option>
+        <option value="TMP236">TMP236</option>
+        <option value="CUSTOM">Custom voltage-output sensor</option>
+      </select>
+    </div>
+    <div><label>Temperature sensitivity S<sub>T</sub> (mV/°C, signed allowed)</label><input id="sens" type="number" step="0.01"></div>
+    <div><label>Representative output at 37°C (V, optional)</label><input id="v37" type="number" step="0.001"></div>
+    <div><label>Sensor accuracy / tolerance (±°C, context only)</label><input id="sensorAcc" type="number" step="0.01"></div>
+
+    <div><label>T<sub>MIN</sub> (°C)</label><input id="tmin" type="number" step="0.1" value="35"></div>
+    <div><label>T<sub>MAX</sub> (°C)</label><input id="tmax" type="number" step="0.1" value="42"></div>
+    <div><label>Required temperature resolution ΔT<sub>REQ</sub> (°C)</label><input id="dtreq" type="number" step="0.01" value="0.1"></div>
+    <div><label>VTC-window margin (%)</label><input id="marginPct" type="number" step="1" value="25"></div>
+
+    <div><label>Manual VTC window (mV; 0 = automatic)</label><input id="manualVwin" type="number" step="0.1" value="0"></div>
+    <div><label>Number of channels N<sub>CH</sub></label><input id="nch" type="number" min="1" step="1" value="1"></div>
+    <div><label>Required per-channel conversion rate (S/s)</label><input id="fchReq" type="number" min="0.1" step="1" value="10"></div>
+    <div><label>Required timing counts per ΔT<sub>REQ</sub></label><input id="nReq" type="number" min="1" step="1" value="4"></div>
+  </div>
+  <div id="customNote" class="small hidden" style="margin-top:8px">For a custom sensor, enter an externally accessible analog voltage sensitivity. The explorer uses |S<sub>T</sub>| for resolution calculations.</div>
+</section>
+
+<section class="card span-12">
+  <h2>2. Architecture and design limits</h2>
+  <div class="formgrid">
+    <div><label>C<sub>INT,min</sub> (pF)</label><input id="cMin" type="number" step="0.1" value="10"></div>
+    <div><label>C<sub>INT,max</sub> (pF)</label><input id="cMax" type="number" step="0.1" value="100"></div>
+    <div><label>I<sub>REF,min</sub> (nA)</label><input id="iMin" type="number" step="0.01" value="0.5"></div>
+    <div><label>I<sub>REF,max</sub> (nA)</label><input id="iMax" type="number" step="0.1" value="600"></div>
+
+    <div><label>VTC conversion rate min (S/s)</label><input id="fvtcMin" type="number" step="100" value="1000"></div>
+    <div><label>VTC conversion rate max (S/s)</label><input id="fvtcMax" type="number" step="1000" value="100000"></div>
+    <div><label>VTC clock min (Hz)</label><input id="fclkMin" type="number" step="100000" value="1000000"></div>
+    <div><label>VTC clock max (Hz)</label><input id="fclkMax" type="number" step="1000000" value="10000000"></div>
+
+    <div><label>Reset interval t<sub>RST</sub> (µs)</label><input id="tReset" type="number" step="0.05" value="0.5"></div>
+    <div><label>Guard / latch interval t<sub>GUARD</sub> (µs)</label><input id="tGuard" type="number" step="0.05" value="1.0"></div>
+    <div><label>Settling interval t<sub>SET</sub> (µs)</label><input id="tSet" type="number" step="0.05" value="0.2"></div>
+    <div><label>MUX switching interval t<sub>MUX</sub> (µs, ignored for 1 ch)</label><input id="tMux" type="number" step="0.05" value="0.2"></div>
+
+    <div><label>Estimated integration-node leakage (pA)</label><input id="iLeak" type="number" step="1" value="10"></div>
+    <div><label>Maximum leakage fraction of I<sub>REF</sub> (%)</label><input id="leakPct" type="number" step="0.1" value="1"></div>
+    <div><label>Allocated VTC temperature error (°C)</label><input id="vtcErrTemp" type="number" step="0.01" value="0.02"></div>
+    <div><label>Assumed VTC supply for ramp power (V)</label><input id="vdd" type="number" step="0.1" value="1.0"></div>
+
+    <div>
+      <label>Optimization priority</label>
+      <select id="priority">
+        <option value="balanced">Balanced</option>
+        <option value="power">Lowest power</option>
+        <option value="resolution">Highest resolution</option>
+        <option value="throughput">Highest throughput</option>
+      </select>
+    </div>
+  </div>
+  <div class="btnrow">
+    <button id="runBtn">Calculate & Recommend</button>
+    <button id="resetBtn" class="secondary">Reset defaults</button>
+  </div>
+</section>
+
+<section class="card span-12">
+  <h2>3. Feasibility and recommended initial VTC specification</h2>
+  <div id="statusBox" class="status warn"><span class="dot"></span><span>Run the calculation.</span></div>
+
+  <div class="kpis" style="margin-top:12px">
+    <div class="kpi"><div class="l">ΔVREQ</div><div class="v" id="kpiDvReq">—</div></div>
+    <div class="kpi"><div class="l">VTC input window</div><div class="v" id="kpiVwin">—</div></div>
+    <div class="kpi"><div class="l">Recommended K<sub>VTC</sub></div><div class="v" id="kpiK">—</div></div>
+    <div class="kpi"><div class="l">Temperature LSB</div><div class="v" id="kpiTlsb">—</div></div>
+  </div>
+
+  <div id="levelShiftNote" class="callout" style="margin-top:12px"></div>
+
+  <h3>RECOMMENDED INITIAL VTC SPECIFICATION</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th style="width:34%">Parameter</th><th>Recommended / calculated value</th></tr></thead>
+      <tbody id="specBody"></tbody>
+    </table>
+  </div>
+  <div class="btnrow">
+    <button id="copyBtn" class="secondary">Copy specification</button>
+    <button id="jsonBtn" class="secondary">Export JSON</button>
+  </div>
+</section>
+
+<section class="card span-6">
+  <h2>4. C<sub>INT</sub> exploration</h2>
+  <div class="sectionnote">Sweeps your configured capacitor range while keeping the recommended VTC gain fixed. This reveals the required I<sub>REF</sub>, kT/C noise, reset-switch resistance, leakage margin, and ramp-current power.</div>
+  <div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <div>
+      <label>Displayed metric</label>
+      <select id="cMetric">
+        <option value="iref">Required IREF (nA)</option>
+        <option value="noise">kT/C temperature noise (°C rms)</option>
+        <option value="ron">Max reset RON (kΩ)</option>
+        <option value="power">Ramp-current power (nW)</option>
+        <option value="leak">Leakage / IREF (%)</option>
+      </select>
+    </div>
+  </div>
+  <div class="chartbox"><svg id="cChart"></svg></div>
+  <div id="cSummary" class="small" style="margin-top:8px"></div>
+</section>
+
+<section class="card span-6">
+  <h2>5. I<sub>REF</sub> exploration</h2>
+  <div class="sectionnote">Sweeps I<sub>REF</sub> using the recommended C<sub>INT</sub>. Regions are checked against minimum resolution, conversion-time, and leakage constraints.</div>
+  <div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <div>
+      <label>Displayed metric</label>
+      <select id="iMetric">
+        <option value="k">K_VTC (ms/V)</option>
+        <option value="tlsb">Temperature LSB (°C)</option>
+        <option value="tconv">Full-window conversion time (µs)</option>
+        <option value="counts">Counts per ΔTREQ</option>
+        <option value="power">Ramp-current power (nW)</option>
+      </select>
+    </div>
+  </div>
+  <div class="chartbox"><svg id="iChart"></svg></div>
+  <div id="iSummary" class="small" style="margin-top:8px"></div>
+</section>
+
+<section class="card span-6">
+  <h2>6. VTC conversion-rate exploration</h2>
+  <div class="sectionnote">Sweeps aggregate VTC conversion rate. The recommended C<sub>INT</sub>, I<sub>REF</sub>, and clock are held fixed, while available conversion time and K<sub>VTC,max</sub> change.</div>
+  <div class="formgrid" style="grid-template-columns:1fr 1fr">
+    <div>
+      <label>Displayed metric</label>
+      <select id="fMetric">
+        <option value="kmax">K_VTC,max (ms/V)</option>
+        <option value="margin">Gain feasibility margin Kmax/Kselected</option>
+        <option value="fch">Ideal per-channel rate (S/s)</option>
+        <option value="tconvmax">Available conversion time (µs)</option>
+      </select>
+    </div>
+  </div>
+  <div class="chartbox"><svg id="fChart"></svg></div>
+  <div id="fSummary" class="small" style="margin-top:8px"></div>
+</section>
+
+<section class="card span-6">
+  <h2>7. C<sub>INT</sub>–I<sub>REF</sub> feasibility map</h2>
+  <div class="sectionnote">Each point corresponds to K<sub>VTC</sub> = C<sub>INT</sub>/I<sub>REF</sub> at the recommended conversion rate and clock.</div>
+  <canvas id="mapCanvas" width="720" height="360"></canvas>
+  <div class="legend">
+    <span><i style="background:#2ca66f"></i>Feasible</span>
+    <span><i style="background:#e5a93f"></i>Resolution-limited</span>
+    <span><i style="background:#d95b5b"></i>Conversion-time-limited</span>
+    <span><i style="background:#8b5cf6"></i>Leakage-sensitive</span>
+    <span><i style="background:#111827"></i>Recommended point</span>
+  </div>
+</section>
+
+<section class="card span-12">
+  <h2>Calculation basis</h2>
+  <div class="small">
+    <p><code class="formula">ΔVREQ = |ST| ΔTREQ</code> &nbsp; 
+    <code class="formula">ΔVTEMP = |ST|(TMAX − TMIN)</code> &nbsp;
+    <code class="formula">VWIN = ΔVTEMP(1 + margin)</code> unless manually overridden.</p>
+    <p><code class="formula">KVTC,max = tCONV,max / VWIN</code> &nbsp;
+    <code class="formula">KVTC,min = NREQ /(fCLK ΔVREQ)</code> &nbsp;
+    <code class="formula">KVTC = CINT / IREF</code>.</p>
+    <p><code class="formula">VLSB = 1 /(fCLK KVTC)</code> &nbsp;
+    <code class="formula">TLSB = VLSB / |ST|</code> &nbsp;
+    <code class="formula">vn,C = √(kT/CINT)</code>.</p>
+    <p>The feasibility engine also checks aggregate channel throughput, reset/settling/guard overhead, IREF limits, and the user-defined leakage fraction. Power values shown are the <b>charging-current contribution only</b>, not total VTC power.</p>
+  </div>
+</section>
+
+</div>
+<div class="footer">VTC Design Explorer v1.0 — first-order engineering design aid. Numerical recommendations should be verified with the selected sensor transfer curve and transistor-level PVT/Monte Carlo simulations before implementation.</div>
+</main>
+
+<script>
+const presets = {
+  LMT70:{sens:-5.19,v37:0.91,acc:0.13},
+  TMP236:{sens:19.5,v37:1.122,acc:0.5},
+  CUSTOM:{sens:10,v37:0.5,acc:0.5}
+};
+const $ = id => document.getElementById(id);
+let last = null;
+
+function num(id){ return parseFloat($(id).value); }
+function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+function logspace(a,b,n){
+  if(a<=0||b<=0) return [];
+  const la=Math.log(a), lb=Math.log(b), out=[];
+  for(let i=0;i<n;i++) out.push(Math.exp(la+(lb-la)*i/(n-1)));
+  return out;
+}
+function fmt(x,unit="",digits=3){
+  if(!Number.isFinite(x)) return "—";
+  let ax=Math.abs(x), s;
+  if(ax!==0 && (ax>=1e5 || ax<1e-3)) s=x.toExponential(2);
+  else s=Number(x.toFixed(digits)).toString();
+  return s+(unit?` ${unit}`:"");
+}
+function ceilBits(n){ return Math.max(1,Math.ceil(Math.log2(Math.max(2,n+1)))); }
+
+function loadPreset(){
+  const p=presets[$("sensorPreset").value];
+  $("sens").value=p.sens;
+  $("v37").value=p.v37;
+  $("sensorAcc").value=p.acc;
+  $("customNote").classList.toggle("hidden",$("sensorPreset").value!=="CUSTOM");
+}
+$("sensorPreset").addEventListener("change",()=>{loadPreset(); calculate();});
+
+function getInputs(){
+  return {
+    sensor:$("sensorPreset").value,
+    sens:num("sens")/1000, v37:num("v37"), acc:num("sensorAcc"),
+    tmin:num("tmin"), tmax:num("tmax"), dT:num("dtreq"), margin:num("marginPct")/100,
+    manualVwin:num("manualVwin")/1000, nch:Math.max(1,Math.round(num("nch"))),
+    fchReq:num("fchReq"), nReq:num("nReq"),
+    cMin:num("cMin")*1e-12, cMax:num("cMax")*1e-12,
+    iMin:num("iMin")*1e-9, iMax:num("iMax")*1e-9,
+    fvtcMin:num("fvtcMin"), fvtcMax:num("fvtcMax"),
+    fclkMin:num("fclkMin"), fclkMax:num("fclkMax"),
+    tReset:num("tReset")*1e-6, tGuard:num("tGuard")*1e-6,
+    tSet:num("tSet")*1e-6, tMux:num("tMux")*1e-6,
+    iLeak:num("iLeak")*1e-12, leakPct:num("leakPct")/100,
+    vtcErrTemp:num("vtcErrTemp"), vdd:num("vdd"), priority:$("priority").value
+  };
+}
+function validate(x){
+  const errs=[];
+  if(!(x.tmax>x.tmin)) errs.push("TMAX must be greater than TMIN.");
+  if(!(Math.abs(x.sens)>0)) errs.push("Sensor sensitivity must be non-zero.");
+  if(!(x.dT>0)) errs.push("Required temperature resolution must be positive.");
+  if(!(x.cMax>=x.cMin && x.cMin>0)) errs.push("Capacitance limits are invalid.");
+  if(!(x.iMax>=x.iMin && x.iMin>0)) errs.push("IREF limits are invalid.");
+  if(!(x.fvtcMax>=x.fvtcMin && x.fvtcMin>0)) errs.push("VTC-rate limits are invalid.");
+  if(!(x.fclkMax>=x.fclkMin && x.fclkMin>0)) errs.push("Clock limits are invalid.");
+  if(!(x.nReq>=1)) errs.push("Required timing counts must be at least 1.");
+  return errs;
+}
+function calcBase(x){
+  const S=Math.abs(x.sens);
+  const dVreq=S*x.dT;
+  const dVtemp=S*(x.tmax-x.tmin);
+  const vwin=x.manualVwin>0 ? x.manualVwin : dVtemp*(1+x.margin);
+  const overhead=x.tReset+x.tGuard+x.tSet+(x.nch>1?x.tMux:0);
+  const minAggregate=x.nch*x.fchReq;
+  const vErr=S*x.vtcErrTemp;
+  return {S,dVreq,dVtemp,vwin,overhead,minAggregate,vErr};
+}
+function candidateScore(c,x,b){
+  const lpos=(v,a,z)=> clamp((Math.log(v)-Math.log(a))/(Math.log(z)-Math.log(a)||1),0,1);
+  const pRate=lpos(c.fvtc,Math.max(x.fvtcMin,b.minAggregate),x.fvtcMax);
+  const pClk=lpos(c.fclk,x.fclkMin,x.fclkMax);
+  const pC=lpos(c.C,x.cMin,x.cMax);
+  const pI=lpos(c.I,x.iMin,x.iMax);
+  const resNorm=Math.min(1,c.counts/Math.max(x.nReq,1));
+  if(x.priority==="power"){
+    return 0.35*pClk+0.20*pRate+0.35*pI+0.10*pC - 0.10*resNorm;
+  }
+  if(x.priority==="resolution"){
+    return Math.log10(c.tlsb+1e-15) + 0.05*pI + 0.05*pRate;
+  }
+  if(x.priority==="throughput"){
+    return -3*pRate + 0.2*pClk + 0.15*pI - 0.05*resNorm;
+  }
+  // balanced: prefer geometric-middle rate/clock/C/I and 5-10 counts of margin
+  const mid = z => Math.abs(z-0.5);
+  const countPenalty=Math.abs(Math.log(Math.max(c.counts,1e-6)/Math.max(6,x.nReq)))/3;
+  return 0.9*mid(pRate)+0.6*mid(pClk)+0.45*mid(pC)+0.35*mid(pI)+0.45*countPenalty;
+}
+function findRecommendation(x,b){
+  const fLow=Math.max(x.fvtcMin,b.minAggregate);
+  if(fLow>x.fvtcMax) return null;
+  const fRates=logspace(fLow,x.fvtcMax,24);
+  const fClks=logspace(x.fclkMin,x.fclkMax,18);
+  const caps=logspace(x.cMin,x.cMax,22);
+  const fracs=[0.05,0.15,0.3,0.45,0.6,0.75,0.9,0.98];
+  let best=null, bestScore=Infinity;
+  for(const fvtc of fRates){
+    const Ts=1/fvtc;
+    const tconvMax=Ts-b.overhead;
+    if(tconvMax<=0) continue;
+    const kmax=tconvMax/b.vwin;
+    for(const fclk of fClks){
+      const kmin=x.nReq/(fclk*b.dVreq);
+      if(!(kmin<=kmax)) continue;
+      for(const C of caps){
+        for(const q of fracs){
+          const K=kmin+(kmax-kmin)*q;
+          const I=C/K;
+          if(I<x.iMin || I>x.iMax) continue;
+          const leakFrac=x.iLeak/I;
+          if(leakFrac>x.leakPct) continue;
+          const vlsb=1/(fclk*K);
+          const tlsb=vlsb/b.S;
+          const counts=fclk*K*b.dVreq;
+          const tFull=K*b.vwin;
+          const duty=tFull/Ts;
+          const iavg=I*duty;
+          const pRamp=x.vdd*iavg;
+          const nmax=fclk*tconvMax;
+          const bits=ceilBits(nmax);
+          const vn=Math.sqrt(1.380649e-23*300/C);
+          const tNoise=vn/b.S;
+          const ron=x.tReset/(-Math.log(1e-4)*C);
+          const c={fvtc,fclk,C,I,K,kmin,kmax,vlsb,tlsb,counts,tFull,tconvMax,Ts,duty,iavg,pRamp,nmax,bits,vn,tNoise,ron,leakFrac};
+          const s=candidateScore(c,x,b);
+          if(s<bestScore){bestScore=s;best=c;}
+        }
+      }
+    }
+  }
+  return best;
+}
+function reasonNoSolution(x,b){
+  const parts=[];
+  if(b.minAggregate>x.fvtcMax) parts.push(`Required aggregate rate ${fmt(b.minAggregate,"S/s")} exceeds the allowed VTC maximum.`);
+  const fLow=Math.max(x.fvtcMin,b.minAggregate);
+  const Ts=1/fLow;
+  const tconv=Ts-b.overhead;
+  if(tconv<=0) parts.push("Timing overhead consumes the complete conversion period at the lowest usable VTC rate.");
+  else{
+    const kmax=tconv/b.vwin;
+    const kmin=x.nReq/(x.fclkMax*b.dVreq);
+    if(kmin>kmax) parts.push("Even at maximum clock and minimum usable conversion rate, the required timing resolution is incompatible with the available conversion time.");
+  }
+  parts.push("Try increasing fCLK,max, reducing the minimum VTC rate, reducing NREQ, reducing VWIN/margin, or widening CINT/IREF limits.");
+  return parts.join(" ");
+}
+function nearestMode(f){
+  if(f>=50000) return "High-speed / array-scanning";
+  if(f>=5000) return "Balanced";
+  return "Precision / low-power";
+}
+function updateSpec(x,b,r){
+  $("kpiDvReq").textContent=fmt(b.dVreq*1e3,"mV",3);
+  $("kpiVwin").textContent=fmt(b.vwin*1e3,"mV",2);
+  $("kpiK").textContent=fmt(r.K*1e3,"ms/V",3);
+  $("kpiTlsb").textContent=fmt(r.tlsb,"°C/LSB",4);
+
+  const outputKnown=Number.isFinite(x.v37) && x.v37>0;
+  let note=`The automatic useful sensor span is ${fmt(b.dVtemp*1e3,"mV",2)} over ${fmt(x.tmax,"°C",1)} to ${fmt(x.tmax,"°C",1).replace(String(x.tmax),String(x.tmax))}. `;
+  if(outputKnown && x.v37 > b.vwin*2){
+    note=`The sensor's representative absolute output near 37°C is ${fmt(x.v37,"V",3)}, while the selected VTC window is ${fmt(b.vwin*1e3,"mV",2)}. The recommendation therefore assumes input-window translation or equivalent differential processing so the VTC converts the useful temperature-dependent excursion rather than the full DC sensor output.`;
+  }else{
+    note=`The selected VTC window is ${fmt(b.vwin*1e3,"mV",2)}. Verify that the implemented input path maps the useful sensor-voltage excursion into this window.`;
+  }
+  $("levelShiftNote").textContent=note;
+
+  const spec = [
+    ["Target sensor", x.sensor==="CUSTOM" ? "Custom voltage-output sensor" : x.sensor.replace("LMT70","LMT70/LMT70A")],
+    ["Temperature range", `${fmt(x.tmin,"°C",1)} to ${fmt(x.tmax,"°C",1)}`],
+    ["Required temperature resolution", fmt(x.dT,"°C",3)],
+    ["|S_T|", fmt(b.S*1e3,"mV/°C",3)],
+    ["Sensor-voltage increment ΔVREQ", fmt(b.dVreq*1e3,"mV",3)],
+    ["Useful voltage excursion ΔVTEMP", fmt(b.dVtemp*1e3,"mV",2)],
+    ["VTC input window VWIN", fmt(b.vwin*1e3,"mV",2)],
+    ["Number of channels", `${x.nch}`],
+    ["Required per-channel rate", fmt(x.fchReq,"S/s",1)],
+    ["Recommended aggregate VTC rate", fmt(r.fvtc,"S/s",0)],
+    ["Ideal aggregate-rate / channel", fmt(r.fvtc/x.nch,"S/s",1)],
+    ["Recommended VTC clock", fmt(r.fclk/1e6,"MHz",3)],
+    ["K_VTC,min at selected clock", fmt(r.kmin*1e3,"ms/V",3)],
+    ["K_VTC,max at selected conversion rate", fmt(r.kmax*1e3,"ms/V",3)],
+    ["Recommended K_VTC", fmt(r.K*1e3,"ms/V",3)],
+    ["Recommended C_INT", fmt(r.C*1e12,"pF",2)],
+    ["Recommended I_REF", fmt(r.I*1e9,"nA",3)],
+    ["Input-referred VLSB", fmt(r.vlsb*1e6,"µV",2)],
+    ["Temperature LSB", fmt(r.tlsb,"°C/LSB",4)],
+    ["Timing counts per ΔTREQ", fmt(r.counts,"counts",2)],
+    ["Maximum conversion interval", fmt(r.tconvMax*1e6,"µs",2)],
+    ["Full-window conversion time at selected K", fmt(r.tFull*1e6,"µs",2)],
+    ["Counter maximum nominal code", fmt(r.nmax,"counts",0)],
+    ["Minimum counter width", `${r.bits} bit`],
+    ["Recommended counter with 1-bit margin", `${r.bits+1} bit`],
+    ["kT/C voltage noise at 300 K", fmt(r.vn*1e6,"µV rms",2)],
+    ["kT/C temperature equivalent", fmt(r.tNoise,"°C rms",5)],
+    ["Maximum reset-switch RON for 10^-4 residual", fmt(r.ron/1e3,"kΩ",2)],
+    ["Estimated leakage / IREF", fmt(100*r.leakFrac,"%",3)],
+    ["Allocated VTC input-error target", fmt(b.vErr*1e6,"µV",1)],
+    ["Ramp-current average contribution", fmt(r.iavg*1e9,"nA",2)],
+    ["Ramp-current power contribution", fmt(r.pRamp*1e9,"nW",2)],
+    ["Operating role", nearestMode(r.fvtc)]
+  ];
+  $("specBody").innerHTML=spec.map(([a,v])=>`<tr><td>${a}</td><td>${v}</td></tr>`).join("");
+  return spec;
+}
+function setStatus(kind,text){
+  const box=$("statusBox"); box.className="status "+kind;
+  box.innerHTML=`<span class="dot"></span><span>${text}</span>`;
+}
+function calculate(){
+  const x=getInputs(), errs=validate(x);
+  if(errs.length){ setStatus("bad",errs.join(" ")); last=null; return; }
+  const b=calcBase(x);
+  const r=findRecommendation(x,b);
+  if(!r){
+    setStatus("bad","No feasible initial operating point found. "+reasonNoSolution(x,b));
+    $("specBody").innerHTML="";
+    last=null; clearCharts(); return;
+  }
+  setStatus("good",`FEASIBLE — ${nearestMode(r.fvtc)} recommendation found inside the user-defined CINT, IREF, conversion-rate, clock, timing, and leakage limits.`);
+  const spec=updateSpec(x,b,r);
+  last={x,b,r,spec};
+  renderAll();
+}
+function clearCharts(){
+  ["cChart","iChart","fChart"].forEach(id=>$(id).innerHTML="");
+  const cv=$("mapCanvas"),ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);
+}
+function lineChart(svgId, data, xLabel, yLabel, recX){
+  const svg=$(svgId), W=700,H=290,m={l:60,r:18,t:18,b:45};
+  const xs=data.map(d=>d.x), ys=data.map(d=>d.y).filter(Number.isFinite);
+  if(!ys.length){svg.innerHTML="";return;}
+  let xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);
+  if(ymin===ymax){ymin*=.9;ymax*=1.1;if(ymin===ymax){ymin-=1;ymax+=1}}
+  const px=x=>m.l+(Math.log(x)-Math.log(xmin))/(Math.log(xmax)-Math.log(xmin)||1)*(W-m.l-m.r);
+  const py=y=>H-m.b-(y-ymin)/(ymax-ymin||1)*(H-m.t-m.b);
+  const pts=data.filter(d=>Number.isFinite(d.y)).map(d=>`${px(d.x)},${py(d.y)}`).join(" ");
+  let g=`<rect x="0" y="0" width="${W}" height="${H}" fill="white"/>
+  <line x1="${m.l}" y1="${H-m.b}" x2="${W-m.r}" y2="${H-m.b}" stroke="#7b8492"/>
+  <line x1="${m.l}" y1="${m.t}" x2="${m.l}" y2="${H-m.b}" stroke="#7b8492"/>`;
+  for(let i=0;i<=5;i++){
+    const y=ymin+(ymax-ymin)*i/5, yy=py(y);
+    g+=`<line x1="${m.l}" y1="${yy}" x2="${W-m.r}" y2="${yy}" stroke="#edf0f4"/>
+        <text x="${m.l-7}" y="${yy+4}" font-size="10" text-anchor="end" fill="#667085">${shortNum(y)}</text>`;
+  }
+  for(let i=0;i<=5;i++){
+    const lx=Math.log(xmin)+(Math.log(xmax)-Math.log(xmin))*i/5, x=Math.exp(lx), xx=px(x);
+    g+=`<line x1="${xx}" y1="${m.t}" x2="${xx}" y2="${H-m.b}" stroke="#f1f3f6"/>
+        <text x="${xx}" y="${H-m.b+17}" font-size="10" text-anchor="middle" fill="#667085">${shortNum(x)}</text>`;
+  }
+  g+=`<polyline fill="none" stroke="#2563eb" stroke-width="2.2" points="${pts}"/>`;
+  if(recX && recX>=xmin && recX<=xmax){
+    const xx=px(recX); g+=`<line x1="${xx}" y1="${m.t}" x2="${xx}" y2="${H-m.b}" stroke="#111827" stroke-width="1.5" stroke-dasharray="5,4"/>`;
+  }
+  g+=`<text x="${(m.l+W-m.r)/2}" y="${H-8}" font-size="11" text-anchor="middle" fill="#344054">${xLabel} (log scale)</text>
+      <text transform="translate(14 ${(m.t+H-m.b)/2}) rotate(-90)" font-size="11" text-anchor="middle" fill="#344054">${yLabel}</text>`;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.innerHTML=g;
+}
+function shortNum(v){
+  const a=Math.abs(v);
+  if(a>=10000 || (a>0&&a<0.001)) return v.toExponential(1);
+  if(a>=100) return v.toFixed(0);
+  if(a>=10) return v.toFixed(1);
+  return v.toFixed(3);
+}
+function renderC(){
+  if(!last)return;
+  const {x,b,r}=last, metric=$("cMetric").value;
+  const caps=logspace(x.cMin,x.cMax,80);
+  const data=caps.map(C=>{
+    const I=C/r.K, vn=Math.sqrt(1.380649e-23*300/C), tnoise=vn/b.S;
+    const ron=x.tReset/(-Math.log(1e-4)*C), leak=x.iLeak/I;
+    const p=x.vdd*I*(r.tFull/r.Ts);
+    let y,label;
+    if(metric==="iref"){y=I*1e9;label="IREF (nA)"}
+    if(metric==="noise"){y=tnoise;label="kT/C temp. noise (°C rms)"}
+    if(metric==="ron"){y=ron/1e3;label="Max reset RON (kΩ)"}
+    if(metric==="power"){y=p*1e9;label="Ramp-current power (nW)"}
+    if(metric==="leak"){y=100*leak;label="Leakage / IREF (%)"}
+    return {x:C*1e12,y,label,I,tnoise,ron,p,leak};
+  });
+  lineChart("cChart",data,"CINT (pF)",data[0].label,r.C*1e12);
+  const lo=data[0],hi=data[data.length-1];
+  $("cSummary").innerHTML=`Across ${fmt(x.cMin*1e12,"pF",1)}–${fmt(x.cMax*1e12,"pF",1)}, required IREF changes from ${fmt(lo.I*1e9,"nA",3)} to ${fmt(hi.I*1e9,"nA",3)} at fixed K. The vertical marker is the recommended CINT = ${fmt(r.C*1e12,"pF",2)}.`;
+}
+function pointClass(I,K,kmin,kmax,x){
+  if(I<=0) return "bad";
+  if(x.iLeak/I>x.leakPct) return "leak";
+  if(K<kmin) return "res";
+  if(K>kmax) return "time";
+  return "ok";
+}
+function renderI(){
+  if(!last)return;
+  const {x,b,r}=last, metric=$("iMetric").value;
+  const is=logspace(x.iMin,x.iMax,90);
+  const data=is.map(I=>{
+    const K=r.C/I, tFull=K*b.vwin, vlsb=1/(r.fclk*K), tlsb=vlsb/b.S, counts=r.fclk*K*b.dVreq;
+    const p=x.vdd*I*(Math.min(tFull,r.Ts)/r.Ts);
+    const cls=pointClass(I,K,r.kmin,r.kmax,x);
+    let y,label;
+    if(metric==="k"){y=K*1e3;label="K_VTC (ms/V)"}
+    if(metric==="tlsb"){y=tlsb;label="Temperature LSB (°C)"}
+    if(metric==="tconv"){y=tFull*1e6;label="Full-window conversion time (µs)"}
+    if(metric==="counts"){y=counts;label="Counts per ΔTREQ"}
+    if(metric==="power"){y=p*1e9;label="Ramp-current power (nW)"}
+    return {x:I*1e9,y,label,cls,K,tFull,tlsb,counts,p};
+  });
+  lineChart("iChart",data,"IREF (nA)",data[0].label,r.I*1e9);
+  const feasible=data.filter(d=>d.cls==="ok");
+  $("iSummary").innerHTML=feasible.length?
+    `At CINT = ${fmt(r.C*1e12,"pF",2)}, the feasible IREF sweep spans approximately ${fmt(feasible[0].x,"nA",3)} to ${fmt(feasible[feasible.length-1].x,"nA",3)} under the current timing, resolution, and leakage limits. Recommended IREF = ${fmt(r.I*1e9,"nA",3)}.`:
+    `No IREF value in the selected range remains feasible when CINT is fixed at the recommended value under the current constraints.`;
+}
+function renderF(){
+  if(!last)return;
+  const {x,b,r}=last, metric=$("fMetric").value;
+  const fLow=Math.max(x.fvtcMin,b.minAggregate);
+  const fs=logspace(fLow,x.fvtcMax,90);
+  const data=fs.map(f=>{
+    const Ts=1/f, tc=Ts-b.overhead, kmax=tc>0?tc/b.vwin:NaN;
+    const margin=kmax/r.K;
+    const fch=f/x.nch;
+    let y,label;
+    if(metric==="kmax"){y=kmax*1e3;label="K_VTC,max (ms/V)"}
+    if(metric==="margin"){y=margin;label="Kmax / Kselected"}
+    if(metric==="fch"){y=fch;label="Ideal per-channel rate (S/s)"}
+    if(metric==="tconvmax"){y=tc*1e6;label="Available conversion time (µs)"}
+    return {x:f,y,label,kmax,margin,fch,tc};
+  });
+  lineChart("fChart",data,"Aggregate VTC rate (S/s)",data.find(d=>Number.isFinite(d.y))?.label||"",r.fvtc);
+  const feasible=data.filter(d=>Number.isFinite(d.margin)&&d.margin>=1);
+  $("fSummary").innerHTML=feasible.length?
+    `With the recommended K, the selected timing overhead supports aggregate rates up to approximately ${fmt(feasible[feasible.length-1].x,"S/s",0)} before conversion-time margin falls below unity. The required minimum aggregate rate from channel count is ${fmt(b.minAggregate,"S/s",0)}.`:
+    `The recommended K is not feasible over the displayed VTC-rate sweep.`;
+}
+function renderMap(){
+  if(!last)return;
+  const {x,b,r}=last, cv=$("mapCanvas"),ctx=cv.getContext("2d");
+  const W=cv.width,H=cv.height,m={l:58,r:18,t:16,b:42};
+  ctx.clearRect(0,0,W,H); ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);
+  const nX=90,nY=65;
+  const lx0=Math.log(x.cMin),lx1=Math.log(x.cMax),ly0=Math.log(x.iMin),ly1=Math.log(x.iMax);
+  const px=j=>m.l+j/(nX-1)*(W-m.l-m.r), py=i=>H-m.b-i/(nY-1)*(H-m.t-m.b);
+  const col={ok:"#2ca66f",res:"#e5a93f",time:"#d95b5b",leak:"#8b5cf6"};
+  for(let j=0;j<nX-1;j++){
+    const C=Math.exp(lx0+(lx1-lx0)*(j+.5)/(nX-1));
+    for(let i=0;i<nY-1;i++){
+      const I=Math.exp(ly0+(ly1-ly0)*(i+.5)/(nY-1));
+      const K=C/I, cls=pointClass(I,K,r.kmin,r.kmax,x);
+      ctx.fillStyle=col[cls];
+      ctx.fillRect(px(j),py(i+1),px(j+1)-px(j)+1,py(i)-py(i+1)+1);
+    }
+  }
+  ctx.strokeStyle="#6b7280";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(m.l,H-m.b);ctx.lineTo(W-m.r,H-m.b);ctx.moveTo(m.l,m.t);ctx.lineTo(m.l,H-m.b);ctx.stroke();
+  ctx.fillStyle="#475467";ctx.font="11px Segoe UI";
+  for(let j=0;j<=5;j++){
+    const C=Math.exp(lx0+(lx1-lx0)*j/5),xx=m.l+j/5*(W-m.l-m.r);
+    ctx.fillText(shortNum(C*1e12),xx-10,H-m.b+17);
+  }
+  for(let i=0;i<=5;i++){
+    const I=Math.exp(ly0+(ly1-ly0)*i/5),yy=H-m.b-i/5*(H-m.t-m.b);
+    ctx.fillText(shortNum(I*1e9),6,yy+4);
+  }
+  ctx.font="12px Segoe UI";ctx.fillText("CINT (pF, log)",W/2-40,H-8);
+  ctx.save();ctx.translate(14,H/2+30);ctx.rotate(-Math.PI/2);ctx.fillText("IREF (nA, log)",0,0);ctx.restore();
+  // recommended point
+  const rx=m.l+(Math.log(r.C)-lx0)/(lx1-lx0)*(W-m.l-m.r);
+  const ry=H-m.b-(Math.log(r.I)-ly0)/(ly1-ly0)*(H-m.t-m.b);
+  ctx.fillStyle="#111827";ctx.beginPath();ctx.arc(rx,ry,5.5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#fff";ctx.lineWidth=1.5;ctx.stroke();
+}
+function renderAll(){ renderC();renderI();renderF();renderMap(); }
+["cMetric","iMetric","fMetric"].forEach(id=>$(id).addEventListener("change",renderAll));
+$("runBtn").addEventListener("click",calculate);
+$("copyBtn").addEventListener("click",async()=>{
+  if(!last)return;
+  const txt=["RECOMMENDED INITIAL VTC SPECIFICATION",...last.spec.map(([a,v])=>`${a}: ${v}`)].join("\n");
+  try{await navigator.clipboard.writeText(txt);$("copyBtn").textContent="Copied";setTimeout(()=>$("copyBtn").textContent="Copy specification",1200);}catch(e){alert(txt)}
+});
+$("jsonBtn").addEventListener("click",()=>{
+  if(!last)return;
+  const obj={generated:new Date().toISOString(),sensor:last.x.sensor,inputs:last.x,derived:last.b,recommendation:last.r,specification:Object.fromEntries(last.spec)};
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="vtc_initial_specification.json";a.click();URL.revokeObjectURL(a.href);
+});
+$("resetBtn").addEventListener("click",()=>{
+  $("sensorPreset").value="LMT70"; loadPreset();
+  const d={tmin:35,tmax:42,dtreq:.1,marginPct:25,manualVwin:0,nch:1,fchReq:10,nReq:4,
+    cMin:10,cMax:100,iMin:.5,iMax:600,fvtcMin:1000,fvtcMax:100000,fclkMin:1000000,fclkMax:10000000,
+    tReset:.5,tGuard:1,tSet:.2,tMux:.2,iLeak:10,leakPct:1,vtcErrTemp:.02,vdd:1};
+  Object.entries(d).forEach(([k,v])=>$(k).value=v);
+  $("priority").value="balanced"; calculate();
+});
+loadPreset(); calculate();
+</script>
+</body>
+</html>
