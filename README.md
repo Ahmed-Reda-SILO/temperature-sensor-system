@@ -4,7 +4,7 @@
 
 ## 🚀 Launch Explorer
 
-👉 **[Open VTC Design Explorer](https://ahmed-reda-silo.github.io/temperature-sensor-system/)**
+👉 **[Open VTC Design Explorer V1.0](https://ahmed-reda-silo.github.io/temperature-sensor-system/)**
 
 
 ---
