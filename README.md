@@ -4,7 +4,7 @@
 
 ## 🚀 Launch Explorer
 
-👉 **[Open VTC Design Explorer](./VTC_Design_Explorer_v1_0_stable.html)**
+👉 **[Open VTC Design Explorer](./indexe.html)**
 
 > Keep the README and `VTC_Design_Explorer_v1_0_stable.html` in the **same folder** so the link works locally and on GitHub.
 
